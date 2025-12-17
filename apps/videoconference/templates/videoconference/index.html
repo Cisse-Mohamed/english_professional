@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+
+{% block title %}Video Meetings | EnglishPro{% endblock %}
+
+{% block content %}
+<div class="container animate-fade-in" style="padding: 4rem 0; max-width: 600px;">
+    <div class="card" style="text-align: center; padding: 3rem;">
+        <h1 style="margin-bottom: 1rem;">Video Meetings</h1>
+        <p style="color: var(--text-muted); margin-bottom: 2rem;">
+            Start or join a video conference instantly. Enter a room name to get started.
+        </p>
+
+        <div style="display: flex; gap: 0.5rem; flex-direction: column;">
+            <input type="text" id="room-name-input" class="form-control"
+                placeholder="Enter Room Name (e.g., english-101)"
+                style="text-align: center; font-size: 1.2rem; padding: 1rem;">
+
+            <button id="join-btn" class="btn btn-primary" style="padding: 1rem; font-size: 1.1rem; margin-top: 1rem;">
+                Start / Join Meeting
+            </button>
+        </div>
+
+        <p style="margin-top: 2rem; font-size: 0.9rem; color: var(--text-muted);">
+            Share the room name with others so they can join the same meeting.
+        </p>
+    </div>
+</div>
+
+<script>
+    document.querySelector('#room-name-input').focus();
+    document.querySelector('#room-name-input').onkeyup = function (e) {
+        if (e.keyCode === 13) {  // enter, return
+            document.querySelector('#join-btn').click();
+        }
+    };
+
+    document.querySelector('#join-btn').onclick = function (e) {
+        var roomName = document.querySelector('#room-name-input').value;
+        if (roomName) {
+            window.location.pathname = '/video/' + roomName + '/';
+        } else {
+            alert('Please enter a room name.');
+        }
+    };
+</script>
+{% endblock %}

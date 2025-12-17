@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container" style="padding: 2rem 0;">
+    <div class="card" style="max-width: 800px; margin: 0 auto;">
+        <div style="margin-bottom: 2rem; border-bottom: 1px solid var(--border); padding-bottom: 1rem;">
+            <a href="{% url 'courses:lesson_detail' object.lesson.course.pk object.lesson.pk %}"
+                style="display: inline-flex; align-items: center; gap: 0.5rem; color: var(--text-muted); text-decoration: none; margin-bottom: 1rem;">
+                &larr; Back to Lesson
+            </a>
+            <h1>{{ object.title }}</h1>
+            <p style="color: var(--text-muted);">Due: {{ object.due_date|date:"M d, Y H:i" }}</p>
+            <p>{{ object.description }}</p>
+        </div>
+
+        <!-- Your Submission -->
+        <div style="margin-bottom: 2rem;">
+            <h2>Your Submission</h2>
+            {% if submission %}
+                <p>You submitted on {{ submission.submitted_at|date:"M d, Y H:i" }}</p>
+                <a href="{{ submission.submission_file.url }}" target="_blank">View Your Submission</a>
+            {% else %}
+                <form action="{% url 'peer_review:submission_create' object.pk %}" method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <input type="file" name="submission_file" required>
+                    <button type="submit" class="btn btn-primary">Submit Assignment</button>
+                </form>
+            {% endif %}
+        </div>
+
+        <!-- Reviews you've received -->
+        {% if submission %}
+        <div style="margin-bottom: 2rem;">
+            <h2>Reviews on Your Submission</h2>
+            {% for review in reviews_received %}
+                <div class="card" style="margin-bottom: 1rem;">
+                    <p><strong>Score:</strong> {{ review.score }}</p>
+                    <p>{{ review.comments }}</p>
+                    <p style="font-size: 0.8rem; color: var(--text-muted);">By {{ review.reviewer.username }} on {{ review.reviewed_at|date:"M d, Y H:i" }}</p>
+                </div>
+            {% empty %}
+                <p>No reviews yet.</p>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Review another student's submission -->
+        <div style="margin-bottom: 2rem;">
+            <h2>Review a Peer's Submission</h2>
+            {% if submission_to_review %}
+                <p>Review a submission from one of your peers.</p>
+                <a href="{{ submission_to_review.submission_file.url }}" target="_blank">View Submission</a>
+                <form action="{% url 'peer_review:review_create' submission_to_review.pk %}" method="post">
+                    {% csrf_token %}
+                    <label for="score">Score (0-100):</label>
+                    <input type="number" name="score" min="0" max="100" required>
+                    <label for="comments">Comments:</label>
+                    <textarea name="comments" required></textarea>
+                    <button type="submit" class="btn btn-primary">Submit Review</button>
+                </form>
+            {% else %}
+                <p>No submissions available for you to review at this time.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

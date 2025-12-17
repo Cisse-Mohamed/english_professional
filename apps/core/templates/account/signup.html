@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}Sign Up | EnglishPro{% endblock %}
+
+{% block content %}
+<div class="container" style="display: flex; justify-content: center; padding: 4rem 0;">
+    <div class="card animate-fade-in" style="width: 100%; max-width: 500px; padding: 2rem;">
+        <h1 style="text-align: center; margin-bottom: 2rem;">{% trans "Sign Up" %}</h1>
+
+        <form class="signup" id="signup_form" method="post" action="{% url 'account_signup' %}">
+            {% csrf_token %}
+
+            {% if form.errors %}
+            <div
+                style="background-color: #FEE2E2; color: #B91C1C; padding: 0.75rem; border-radius: var(--radius-md); margin-bottom: 1rem; font-size: 0.9rem;">
+                {% for field in form %}
+                {% for error in field.errors %}
+                <p>{{ field.label }}: {{ error }}</p>
+                {% endfor %}
+                {% endfor %}
+                {{ form.non_field_errors }}
+            </div>
+            {% endif %}
+
+            {% for field in form %}
+            <div class="form-group">
+                <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+                <input type="{{ field.field.widget.input_type }}" name="{{ field.name }}" id="{{ field.id_for_label }}"
+                    class="form-control" {% if field.field.required %}required{% endif %}>
+                {% if field.help_text %}
+                <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.25rem;">{{ field.help_text }}</p>
+                {% endif %}
+            </div>
+            {% endfor %}
+
+            {% if redirect_field_value %}
+            <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}" />
+            {% endif %}
+
+            <button class="btn btn-primary" type="submit" style="width: 100%;">{% trans "Sign Up" %}</button>
+
+            <div style="text-align: center; margin-top: 1.5rem; font-size: 0.9rem; color: var(--text-muted);">
+                Already have an account? <a href="{% url 'account_login' %}" style="color: var(--primary);">Sign In</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,114 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container" style="padding: 2rem 0;">
+    <div class="card" style="max-width: 800px; margin: 0 auto;">
+
+        <div style="margin-bottom: 2rem; border-bottom: 1px solid var(--border); padding-bottom: 1rem;">
+            <a href="{% url 'courses:course_detail' quiz.course.pk %}"
+                style="display: inline-flex; align-items: center; gap: 0.5rem; color: var(--text-muted); text-decoration: none; margin-bottom: 1rem;">
+                &larr; Back to Course
+            </a>
+            <h1>{{ quiz.title }}</h1>
+            {% if quiz.description %}
+            <p style="color: var(--text-muted);">{{ quiz.description }}</p>
+            {% endif %}
+        </div>
+
+        {% if submission and submission.end_time %}
+        <div
+            style="text-align: center; padding: 2rem; background-color: var(--background); border-radius: var(--radius-md);">
+            <h2>Result</h2>
+            <div style="font-size: 3rem; font-weight: bold; color: var(--primary); margin: 1rem 0;">
+                {{ submission.score }} / {{ submission.total_questions }}
+            </div>
+            <p>You submitted this quiz on {{ submission.end_time|date:"M d, Y H:i" }}</p>
+
+            <a href="{% url 'courses:course_detail' quiz.course.pk %}" class="btn btn-primary"
+                style="margin-top: 1rem;">
+                Continue Learning
+            </a>
+        </div>
+        {% elif submission %}
+        <div id="timer" style="position: fixed; top: 1rem; right: 1rem; background-color: var(--background); padding: 0.5rem 1rem; border-radius: var(--radius-sm); font-weight: bold;"></div>
+        <form id="quiz-form" action="{% url 'quiz_take' quiz.pk %}" method="post">
+            {% csrf_token %}
+
+            {% for question in questions %}
+            <div style="margin-bottom: 2rem;">
+                <h3 style="font-size: 1.2rem; margin-bottom: 1rem;">{{ forloop.counter }}. {{ question.text }}</h3>
+
+                {% if question.question_type == 'multiple_choice' %}
+                <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                    {% for choice in question.choices.all %}
+                    <label
+                        style="display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem; border: 1px solid var(--border); border-radius: var(--radius-sm); cursor: pointer; transition: background-color 0.2s;">
+                        <input type="radio" name="question_{{ question.id }}" value="{{ choice.id }}" required
+                            style="width: 1.2rem; height: 1.2rem;">
+                        <span>{{ choice.text }}</span>
+                    </label>
+                    {% endfor %}
+                </div>
+                {% elif question.question_type == 'essay' %}
+                <div>
+                    <textarea name="question_{{ question.id }}" rows="8" style="width: 100%;" required></textarea>
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+
+            <button type="submit" class="btn btn-primary" style="width: 100%; padding: 1rem; font-size: 1.1rem;">
+                Submit Quiz
+            </button>
+        </form>
+        {% else %}
+        <div style="text-align: center;">
+            <p>This is a timed quiz. You will have {{ quiz.duration }} minutes to complete it.</p>
+            <a href="{% url 'quiz_start' quiz.pk %}" class="btn btn-primary">Start Quiz</a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+    label:hover {
+        background-color: var(--background);
+    }
+
+    input[type="radio"]:checked+span {
+        font-weight: bold;
+        color: var(--primary);
+    }
+</style>
+
+{% if submission and not submission.end_time and quiz.duration > 0 %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const quizForm = document.getElementById('quiz-form');
+        const timerDisplay = document.getElementById('timer');
+
+        const submissionStartTime = new Date("{{ submission.start_time.isoformat }}");
+        const quizDuration = {{ quiz.duration }} * 60 * 1000; // in milliseconds
+        const endTime = new Date(submissionStartTime.getTime() + quizDuration);
+
+        function updateTimer() {
+            const now = new Date();
+            const remainingTime = endTime - now;
+
+            if (remainingTime <= 0) {
+                timerDisplay.textContent = 'Time is up!';
+                quizForm.submit();
+            } else {
+                const minutes = Math.floor((remainingTime / 1000 / 60) % 60);
+                const seconds = Math.floor((remainingTime / 1000) % 60);
+                timerDisplay.textContent = `Time remaining: ${minutes}m ${seconds}s`;
+            }
+        }
+
+        updateTimer(); // initial call
+        setInterval(updateTimer, 1000);
+    });
+</script>
+{% endif %}
+
+{% endblock %}

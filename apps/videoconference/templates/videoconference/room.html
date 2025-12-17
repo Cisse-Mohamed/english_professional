@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Video Room: {{ room_name }} | EnglishPro{% endblock %}
+
+{% block extra_css %}
+<style>
+    .video-container {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+        margin-top: 2rem;
+    }
+
+    video {
+        width: 100%;
+        background: #000;
+        border-radius: var(--radius-md);
+        transform: scaleX(-1);
+        /* Mirror effect */
+    }
+
+    .controls {
+        text-align: center;
+        margin-top: 2rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container animate-fade-in" style="padding: 2rem 0;">
+    <div class="card">
+        <h1 style="text-align: center; margin-bottom: 1rem;">Room: {{ room_name }}</h1>
+        <p style="text-align: center; color: var(--text-muted);">Share this room name with your peer to join.</p>
+
+        <div class="video-container"
+            style="position: relative; flex-grow: 1; display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 1rem; padding: 1rem; overflow-y: auto;">
+            <!-- Local Video -->
+            <div class="video-wrapper"
+                style="position: relative; background: #000; border-radius: 1rem; overflow: hidden; aspect-ratio: 16/9;">
+                <video id="local-video" autoplay playsinline muted
+                    style="width: 100%; height: 100%; object-fit: cover;"></video>
+                <div
+                    style="position: absolute; bottom: 10px; left: 10px; background: rgba(0,0,0,0.5); padding: 5px 10px; border-radius: 5px; color: white; font-size: 0.8rem;">
+                    You
+                </div>
+            </div>
+            <!-- Remote videos will be appended here via JS -->
+        </div>
+
+        <div class="controls">
+            <button id="start-btn" class="btn btn-primary" style="padding: 1rem 2rem; font-size: 1.2rem;">
+                Start / Join Call
+            </button>
+
+            <div id="call-controls" style="display: none; gap: 1rem; justify-content: center; margin-top: 1rem;">
+                <button id="toggle-audio-btn" class="btn btn-secondary">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                        <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                        <line x1="12" y1="19" x2="12" y2="23"></line>
+                        <line x1="8" y1="23" x2="16" y2="23"></line>
+                    </svg>
+                    <span style="margin-left: 0.5rem;">Mute</span>
+                </button>
+                <button id="toggle-video-btn" class="btn btn-secondary">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M23 7l-7 5 7 5V7z"></path>
+                        <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
+                    </svg>
+                    <span style="margin-left: 0.5rem;">Stop Video</span>
+                </button>
+                <button id="hangup-btn" class="btn btn-danger" style="background-color: var(--danger); color: white;">
+                    Hang Up
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{ room_name|json_script:"room-name" }}
+{{ user.username|json_script:"user-name" }}
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'videoconference/js/webrtc.js' %}"></script>
+{% endblock %}

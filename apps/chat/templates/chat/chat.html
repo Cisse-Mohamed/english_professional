@@ -1,0 +1,189 @@
+{% extends 'base.html' %}
+
+{% block title %}Messages | EnglishPro{% endblock %}
+
+{% block content %}
+<div class="container animate-fade-in" style="padding: 2rem 0;">
+    <div style="display: flex; gap: 2rem; height: calc(100vh - 200px);">
+        <!-- Sidebar: Thread List -->
+        <div class="card" style="width: 300px; padding: 0; display: flex; flex-direction: column; overflow: hidden;">
+            <div style="padding: 1rem; border-bottom: 1px solid var(--border);">
+                <h2 style="font-size: 1.25rem;">Messages</h2>
+                <!-- New Chat Button (TODO) -->
+            </div>
+
+            <div style="overflow-y: auto; flex-grow: 1;">
+                {% if threads %}
+                <ul style="list-style: none;">
+                    {% for thread in threads %}
+                    <li style="border-bottom: 1px solid var(--border);">
+                        <a href="{% url 'chat_thread' thread.pk %}"
+                            style="display: block; padding: 1rem; color: inherit; text-decoration: none; background-color: {% if thread.pk == active_thread.pk %}var(--background){% else %}transparent{% endif %};">
+                            <div style="font-weight: 600; margin-bottom: 0.25rem;">
+                                {% for participant in thread.participants.all %}
+                                {% if participant != user %}{{ participant.username }}{% endif %}
+                                {% endfor %}
+                            </div>
+                            <div
+                                style="font-size: 0.8rem; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                {{ thread.messages.last.content|default:"No messages yet" }}
+                            </div>
+                        </a>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <div style="padding: 2rem; text-align: center; color: var(--text-muted);">
+                    No conversations yet.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Main Chat Area -->
+        <div class="card" style="flex-grow: 1; display: flex; flex-direction: column; padding: 0; overflow: hidden;">
+            {% if active_thread %}
+            <div style="padding: 1rem; border-bottom: 1px solid var(--border); background-color: var(--surface);">
+                <h3 style="margin: 0;">
+                    {% for participant in active_thread.participants.all %}
+                    {% if participant != user %}{{ participant.username }}{% endif %}
+                    {% endfor %}
+                </h3>
+            </div>
+
+            <div id="chat-messages"
+                style="flex-grow: 1; padding: 1rem; overflow-y: auto; background-color: var(--background); display: flex; flex-direction: column; gap: 0.5rem;">
+                {% for message in active_thread.messages.all %}
+                <div
+                    style="max-width: 70%; padding: 0.75rem 1rem; border-radius: 1rem; {% if message.sender == user %}align-self: flex-end; background-color: var(--primary); color: white; border-bottom-right-radius: 0.25rem;{% else %}align-self: flex-start; background-color: white; border: 1px solid var(--border); border-bottom-left-radius: 0.25rem;{% endif %}">
+                    {% if message.audio_file %}
+                    <audio controls style="max-width: 100%; margin-bottom: 0.5rem;">
+                        <source src="{{ message.audio_file.url }}" type="audio/webm">
+                        Your browser does not support the audio element.
+                    </audio>
+                    {% endif %}
+                    {% if message.content %}
+                    <p style="margin: 0;">{{ message.content }}</p>
+                    {% endif %}
+                    <span
+                        style="font-size: 0.7rem; opacity: 0.8; display: block; text-align: right; margin-top: 0.25rem;">
+                        {{ message.timestamp|date:"H:i" }}
+                    </span>
+                </div>
+                {% endfor %}
+            </div>
+
+            <div id="recording-status"
+                style="display: none; padding: 0.5rem 1rem; color: var(--danger); font-size: 0.9rem;">
+                <span class="pulse">●</span> Recording...
+            </div>
+
+            <div style="padding: 1rem; background-color: var(--surface); border-top: 1px solid var(--border);">
+                <form id="chat-form" method="post" action="{% url 'send_message' active_thread.pk %}"
+                    enctype="multipart/form-data" style="display: flex; gap: 0.5rem; align-items: center;">
+                    {% csrf_token %}
+                    <input type="text" name="content" id="message-input" class="form-control"
+                        placeholder="Type a message..." autocomplete="off">
+
+                    <button type="button" id="record-btn" class="btn btn-secondary" title="Record Audio">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                            <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                            <line x1="12" y1="19" x2="12" y2="23"></line>
+                        </svg>
+                    </button>
+
+                    <button type="submit" class="btn btn-primary" id="send-btn">Send</button>
+                </form>
+            </div>
+            {% else %}
+            <div
+                style="flex-grow: 1; display: flex; align-items: center; justify-content: center; color: var(--text-muted);">
+                Select a conversation to start chatting.
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+    // Auto scroll to bottom
+    const chatMessages = document.getElementById('chat-messages');
+    if (chatMessages) {
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    // Audio Recording Logic
+    const recordBtn = document.getElementById('record-btn');
+    const recordingStatus = document.getElementById('recording-status');
+    const chatForm = document.getElementById('chat-form');
+    const messageInput = document.getElementById('message-input');
+
+    let mediaRecorder;
+    let audioChunks = [];
+    let isRecording = false;
+
+    if (recordBtn) {
+        recordBtn.addEventListener('click', async () => {
+            if (!isRecording) {
+                // Start Recording
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    mediaRecorder = new MediaRecorder(stream);
+                    audioChunks = [];
+
+                    mediaRecorder.ondataavailable = event => {
+                        audioChunks.push(event.data);
+                    };
+
+                    mediaRecorder.onstop = async () => {
+                        const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                        // Create file from blob
+                        const file = new File([audioBlob], "voice_message.webm", { type: "audio/webm" });
+
+                        // Create FormData and submit
+                        const formData = new FormData(chatForm);
+                        formData.set('audio', file);
+
+                        // We need to submit via fetch or just append input to form?
+                        // Easiest way: Append a hidden input or just submit via fetch.
+                        // Let's use fetch for better UX, or simple form submission hack.
+
+                        // Simple approach: Use DataTransfer to set file input (not supported for all browsers) or XHR.
+                        // Implementing Fetch submission for reliability with files.
+
+                        const response = await fetch(chatForm.action, {
+                            method: 'POST',
+                            body: formData,
+                            headers: {
+                                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                            }
+                        });
+
+                        if (response.ok || response.redirected) {
+                            window.location.reload();
+                        }
+                    };
+
+                    mediaRecorder.start();
+                    isRecording = true;
+                    recordBtn.classList.add('btn-danger');
+                    recordBtn.classList.remove('btn-secondary');
+                    recordingStatus.style.display = 'block';
+                } catch (err) {
+                    console.error("Error accessing microphone:", err);
+                    alert("Could not access microphone.");
+                }
+            } else {
+                // Stop Recording
+                mediaRecorder.stop();
+                isRecording = false;
+                recordBtn.classList.remove('btn-danger');
+                recordBtn.classList.add('btn-secondary');
+                recordingStatus.style.display = 'none';
+            }
+        });
+    }
+</script>
+{% endblock %}

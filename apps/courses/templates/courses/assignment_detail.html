@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ assignment.title }} | EnglishPro{% endblock %}
+
+{% block content %}
+<div class="container animate-fade-in" style="padding: 2rem 0;">
+    <div class="card">
+        <div style="margin-bottom: 2rem; border-bottom: 1px solid var(--border); padding-bottom: 1rem;">
+            <a href="{% url 'courses:lesson_detail' assignment.lesson.course.pk assignment.lesson.pk %}"
+                style="color: var(--primary); font-weight: 500; margin-bottom: 1rem; display: inline-block;">&larr; Back
+                to Lesson</a>
+            <h1>{{ assignment.title }}</h1>
+            <p style="color: var(--text-muted);">Due: {{ assignment.due_date|date:"M d, Y H:i" }}</p>
+        </div>
+
+        <div style="margin-bottom: 2rem; font-size: 1.1rem; line-height: 1.6;">
+            {{ assignment.description|linebreaks }}
+        </div>
+
+        {% if assignment.file %}
+        <div
+            style="margin-bottom: 2rem; padding: 1rem; background-color: var(--background); border-radius: var(--radius-md);">
+            <h3>Attached Materials</h3>
+            <a href="{{ assignment.file.url }}" class="btn btn-secondary" style="margin-top: 0.5rem;"
+                target="_blank">Download Attachment</a>
+        </div>
+        {% endif %}
+
+        {% if user.is_instructor %}
+        <div style="margin-top: 2rem; border-top: 1px solid var(--border); padding-top: 2rem;">
+            <h2>Student Submissions</h2>
+            {% if submissions %}
+            <ul style="margin-top: 1rem;">
+                {% for sub in submissions %}
+                <li
+                    style="padding: 1rem; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <strong>{{ sub.student.username }}</strong>
+                        <span style="color: var(--text-muted); font-size: 0.9rem; margin-left: 0.5rem;">{{
+                            sub.submitted_at|date:"M d, H:i" }}</span>
+                    </div>
+                    <a href="{{ sub.file.url }}" class="btn btn-secondary" target="_blank">View File</a>
+                </li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <p style="color: var(--text-muted);">No submissions yet.</p>
+            {% endif %}
+        </div>
+        {% else %}
+        <!-- Student Submission Form -->
+        <div style="margin-top: 2rem; border-top: 1px solid var(--border); padding-top: 2rem;">
+            <h2>Your Submission</h2>
+            {% if user_submission %}
+            <div
+                style="padding: 1rem; background-color: rgba(16, 185, 129, 0.1); border: 1px solid var(--success); border-radius: var(--radius-md); color: #065F46;">
+                <p><strong>Submitted on:</strong> {{ user_submission.submitted_at|date:"M d, Y H:i" }}</p>
+                <a href="{{ user_submission.file.url }}" style="color: var(--success); text-decoration: underline;">View
+                    your file</a>
+                {% if user_submission.grade %}
+                <p style="margin-top: 0.5rem;"><strong>Grade:</strong> {{ user_submission.grade }}/100</p>
+                {% else %}
+                <p style="margin-top: 0.5rem;"><em>Not graded yet.</em></p>
+                {% endif %}
+            </div>
+            {% else %}
+            <form method="post" enctype="multipart/form-data" style="margin-top: 1rem;">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label class="form-label">Upload your work</label>
+                    {{ submission_form.file }}
+                </div>
+                <button type="submit" class="btn btn-primary">Submit Assignment</button>
+            </form>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

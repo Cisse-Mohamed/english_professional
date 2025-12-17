@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+
+{% block title %}Add Lesson | EnglishPro{% endblock %}
+
+{% block content %}
+<div class="container animate-fade-in" style="padding: 2rem 0; max-width: 800px;">
+    <div class="card">
+        <h1 style="margin-bottom: 2rem;">Add Lesson to {{ course.title }}</h1>
+
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+
+            {% for field in form %}
+            <div class="form-group">
+                <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+
+                {% if field.field.widget.input_type == "checkbox" %}
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    {{ field }}
+                </div>
+                {% else %}
+                {{ field }}
+                {% endif %}
+
+                {% if field.help_text %}
+                <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.25rem;">{{ field.help_text }}</p>
+                {% endif %}
+
+                {% for error in field.errors %}
+                <p style="color: var(--danger); font-size: 0.8rem; margin-top: 0.25rem;">{{ error }}</p>
+                {% endfor %}
+            </div>
+            {% endfor %}
+
+            <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                <button type="submit" class="btn btn-primary">Save Lesson</button>
+                <a href="{% url 'courses:course_detail' course.pk %}" class="btn btn-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    document.querySelectorAll('input:not([type="checkbox"]), textarea, select').forEach(el => {
+        el.classList.add('form-control');
+    });
+</script>
+{% endblock %}

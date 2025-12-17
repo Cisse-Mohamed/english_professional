@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+
+{% block title %}My Courses | EnglishPro{% endblock %}
+
+{% block content %}
+<div class="container animate-fade-in" style="padding: 2rem 0;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+        <h1>My Courses</h1>
+        {% if user.is_instructor %}
+        <a href="{% url 'courses:course_create' %}" class="btn btn-primary">
+            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                style="margin-right: 0.5rem;">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+            </svg>
+            Create Course
+        </a>
+        {% endif %}
+    </div>
+
+    {% if courses %}
+    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem;">
+        {% for course in courses %}
+        <div class="card" style="padding: 0; overflow: hidden; display: flex; flex-direction: column;">
+            {% if course.image %}
+            <img src="{{ course.image.url }}" alt="{{ course.title }}"
+                style="width: 100%; height: 200px; object-fit: cover;">
+            {% else %}
+            <div
+                style="width: 100%; height: 200px; background-color: var(--border); display: flex; align-items: center; justify-content: center; color: var(--text-muted);">
+                No Image
+            </div>
+            {% endif %}
+
+            <div style="padding: 1.5rem; flex-grow: 1; display: flex; flex-direction: column;">
+                <h3 style="margin-bottom: 0.5rem;">{{ course.title }}</h3>
+                <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem; flex-grow: 1;">
+                    {{ course.description|truncatewords:20 }}
+                </p>
+
+                <a href="{% url 'courses:course_detail' course.pk %}" class="btn btn-secondary" style="width: 100%;">View
+                    Course</a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="card" style="text-align: center; padding: 3rem;">
+        <div style="font-size: 3rem; margin-bottom: 1rem;">📚</div>
+        <h3 style="margin-bottom: 0.5rem;">No courses found</h3>
+        <p style="color: var(--text-muted);">
+            {% if user.is_instructor %}
+            Get started by creating your first course.
+            {% else %}
+            You haven't been enrolled in any courses yet.
+            {% endif %}
+        </p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

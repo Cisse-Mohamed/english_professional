@@ -1,0 +1,105 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ profile_user.username }} | EnglishPro{% endblock %}
+
+{% block content %}
+<div class="container animate-fade-in" style="padding: 2rem 0;">
+    <div class="card" style="max-width: 800px; margin: 0 auto; overflow: hidden; padding: 0;">
+        <!-- Banner -->
+        <div style="height: 200px; background-color: var(--primary); position: relative;">
+            {% if profile_user.background_picture %}
+            <img src="{{ profile_user.background_picture.url }}" alt="Background"
+                style="width: 100%; height: 100%; object-fit: cover;">
+            {% endif %}
+        </div>
+
+        <div style="padding: 0 2rem 2rem 2rem; position: relative;">
+            <!-- Profile Pic -->
+            <div
+                style="margin-top: -75px; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: flex-end;">
+                {% if profile_user.profile_picture %}
+                <img src="{{ profile_user.profile_picture.url }}" alt="{{ profile_user.username }}"
+                    style="width: 150px; height: 150px; border-radius: 50%; border: 4px solid var(--surface); object-fit: cover; background-color: var(--surface);">
+                {% else %}
+                <div
+                    style="width: 150px; height: 150px; border-radius: 50%; border: 4px solid var(--surface); background-color: var(--primary); color: white; display: flex; align-items: center; justify-content: center; font-size: 3rem; font-weight: bold;">
+                    {{ profile_user.username|make_list|first|upper }}
+                </div>
+                {% endif %}
+
+                {% if user != profile_user %}
+                <a href="{% url 'start_chat' profile_user.pk %}" class="btn btn-primary">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                        style="margin-right: 0.5rem;">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z">
+                        </path>
+                    </svg>
+                    Message
+                </a>
+                {% endif %}
+            </div>
+
+            <h1 style="margin-bottom: 0.25rem;">
+                {{ profile_user.first_name }} {{ profile_user.last_name }}
+                <span style="font-size: 1rem; color: var(--text-muted); font-weight: normal;">
+                    (@{{ profile_user.username}})</span>
+            </h1>
+            <p style="color: var(--secondary); font-weight: 500; margin-bottom: 1.5rem;">
+                {% if profile_user.is_instructor %}Instructor{% else %}Student{% endif %}
+            </p>
+
+            {% if profile_user.bio %}
+            <div style="margin-bottom: 2rem;">
+                <h3>About</h3>
+                <p style="color: var(--text-muted); line-height: 1.6;">{{ profile_user.bio|linebreaks }}</p>
+            </div>
+            {% endif %}
+
+            <!-- Gamification Stats -->
+            <div style="margin-bottom: 2rem; border-top: 1px solid var(--border); padding-top: 2rem;">
+                <h3 style="display: flex; align-items: center; gap: 0.5rem;">
+                    Achievements
+                    {% if profile_user.gamification_points %}
+                    <span
+                        style="font-size: 1rem; background-color: var(--primary); color: white; padding: 2px 8px; border-radius: 12px;">
+                        {{profile_user.gamification_points.total_points}} pts</span>
+                    {% endif %}
+                </h3>
+
+                <div style="display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 1rem;">
+                    {% for user_badge in profile_user.badges.all %}
+                    <div title="{{ user_badge.badge.description }}" style="text-align: center; width: 80px;">
+                        {% if user_badge.badge.icon %}
+                        <img src="{{ user_badge.badge.icon.url }}" alt="{{ user_badge.badge.name }}"
+                            style="width: 60px; height: 60px; object-fit: contain; margin-bottom: 0.5rem;">
+                        {% else %}
+                        <div
+                            style="width: 60px; height: 60px; background-color: var(--surface); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; margin: 0 auto 0.5rem;">
+                            🏆
+                        </div>
+                        {% endif %}
+                        <div style="font-size: 0.8rem; line-height: 1.2;">{{ user_badge.badge.name }}</div>
+                    </div>
+                    {% empty %}
+                    <p style="color: var(--text-muted);">No badges earned yet.</p>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Assignments Button (Requested Feature) -->
+            <!-- Only show if viewing self or instructor viewing student -->
+            {% if user == profile_user or user.is_instructor %}
+            <div style="margin-top: 2rem; border-top: 1px solid var(--border); padding-top: 2rem;">
+                <h3>Academic Activity</h3>
+                <div style="margin-top: 1rem;">
+                    <a href="{% url 'courses:user_assignments' profile_user.pk %}" class="btn btn-secondary">
+                        View Assignments & Submissions
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

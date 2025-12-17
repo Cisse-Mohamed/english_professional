@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+
+{% block title %}Assignments | EnglishPro{% endblock %}
+
+{% block content %}
+<div class="container animate-fade-in" style="padding: 2rem 0;">
+    <h1 style="margin-bottom: 2rem;">
+        {% if view_user == user %}My{% else %}{{ view_user.username }}'s{% endif %} Assignments & Submissions
+    </h1>
+
+    <div class="card">
+        {% if assignment_data %}
+        <div style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse;">
+                <thead>
+                    <tr style="border-bottom: 2px solid var(--border); text-align: left;">
+                        <th style="padding: 1rem;">Course</th>
+                        <th style="padding: 1rem;">Lesson</th>
+                        <th style="padding: 1rem;">Assignment</th>
+                        <th style="padding: 1rem;">Due Date</th>
+                        <th style="padding: 1rem;">Status</th>
+                        <th style="padding: 1rem;">Grade</th>
+                        <th style="padding: 1rem;">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in assignment_data %}
+                    <tr style="border-bottom: 1px solid var(--border);">
+                        <td style="padding: 1rem;">{{ item.assignment.lesson.course.title }}</td>
+                        <td style="padding: 1rem;">{{ item.assignment.lesson.title }}</td>
+                        <td style="padding: 1rem;">{{ item.assignment.title }}</td>
+                        <td style="padding: 1rem;">{{ item.assignment.due_date|date:"M d, Y" }}</td>
+                        <td style="padding: 1rem;">
+                            {% if item.submission %}
+                            <span style="color: var(--success); font-weight: 600;">Submitted</span>
+                            {% else %}
+                            <span style="color: var(--danger);">Pending</span>
+                            {% endif %}
+                        </td>
+                        <td style="padding: 1rem;">
+                            {% if item.submission and item.submission.grade %}
+                            {{ item.submission.grade }}
+                            {% else %}
+                            -
+                            {% endif %}
+                        </td>
+                        <td style="padding: 1rem;">
+                            <a href="{% url 'courses:assignment_detail' item.assignment.pk %}" class="btn btn-secondary"
+                                style="padding: 0.25rem 0.5rem; font-size: 0.8rem;">View</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div style="text-align: center; color: var(--text-muted); padding: 2rem;">
+            No assignments found.
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

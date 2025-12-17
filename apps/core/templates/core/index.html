@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<section
+    style="padding: 6rem 0; text-align: center; background: linear-gradient(135deg, rgba(79, 70, 229, 0.1) 0%, rgba(236, 72, 153, 0.1) 100%);">
+    <div class="container animate-fade-in">
+        <h1 style="font-size: 3.5rem; margin-bottom: 1.5rem; letter-spacing: -0.02em;">
+            Master English for <br>
+            <span
+                style="background: linear-gradient(to right, var(--primary), var(--secondary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Professional
+                Success</span>
+        </h1>
+        <p style="font-size: 1.25rem; color: var(--text-muted); max-width: 600px; margin: 0 auto 2.5rem;">
+            Elevate your career with tailored English courses, interactive lessons, and real-time practice with expert
+            instructors.
+        </p>
+        <div style="display: flex; gap: 1rem; justify-content: center;">
+            <a href="{% url 'account_signup' %}" class="btn btn-primary"
+                style="font-size: 1.1rem; padding: 1rem 2rem;">Start Learning Now</a>
+            <a href="#features" class="btn btn-secondary" style="font-size: 1.1rem; padding: 1rem 2rem;">Learn More</a>
+        </div>
+    </div>
+</section>
+
+<section id="features" style="padding: 5rem 0;">
+    <div class="container">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem;">
+            <!-- Feature 1 -->
+            <div class="card">
+                <div
+                    style="width: 48px; height: 48px; background-color: rgba(79, 70, 229, 0.1); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; color: var(--primary); margin-bottom: 1.5rem;">
+                    <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253">
+                        </path>
+                    </svg>
+                </div>
+                <h3>Expert-Led Courses</h3>
+                <p style="color: var(--text-muted); margin-top: 0.5rem;">Learn from industry professionals with tailored
+                    curriculum for business environments.</p>
+            </div>
+
+            <!-- Feature 2 -->
+            <div class="card">
+                <div
+                    style="width: 48px; height: 48px; background-color: rgba(236, 72, 153, 0.1); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; color: var(--secondary); margin-bottom: 1.5rem;">
+                    <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z">
+                        </path>
+                    </svg>
+                </div>
+                <h3>Interactive Lessons</h3>
+                <p style="color: var(--text-muted); margin-top: 0.5rem;">Video lessons, rich multimedia content, and
+                    real-time assignments.</p>
+            </div>
+
+            <!-- Feature 3 -->
+            <div class="card">
+                <div
+                    style="width: 48px; height: 48px; background-color: rgba(139, 92, 246, 0.1); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; color: var(--accent); margin-bottom: 1.5rem;">
+                    <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z">
+                        </path>
+                    </svg>
+                </div>
+                <h3>Real-time Chat</h3>
+                <p style="color: var(--text-muted); margin-top: 0.5rem;">Communicate directly with instructors and peers
+                    for collaborative learning.</p>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

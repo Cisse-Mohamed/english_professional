@@ -1,0 +1,100 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Create Announcement{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8 max-w-3xl">
+    <h1 class="text-3xl font-bold mb-6">Create Announcement</h1>
+
+    <form method="post" class="bg-white rounded-lg shadow p-8">
+        {% csrf_token %}
+        
+        <div class="mb-6">
+            <label for="title" class="block text-sm font-medium text-gray-700 mb-2">Title *</label>
+            <input type="text" id="title" name="title" required
+                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+        </div>
+
+        <div class="mb-6">
+            <label for="content" class="block text-sm font-medium text-gray-700 mb-2">Content *</label>
+            <textarea id="content" name="content" rows="8" required
+                      class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"></textarea>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <div>
+                <label for="scope" class="block text-sm font-medium text-gray-700 mb-2">Scope *</label>
+                <select id="scope" name="scope" required
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <option value="course">Course-specific</option>
+                    {% if user.is_staff %}
+                    <option value="platform">Platform-wide</option>
+                    {% endif %}
+                </select>
+            </div>
+
+            <div id="courseField">
+                <label for="course_id" class="block text-sm font-medium text-gray-700 mb-2">Course</label>
+                <select id="course_id" name="course_id"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <option value="">Select a course</option>
+                    {% for course in courses %}
+                    <option value="{{ course.id }}">{{ course.title }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
+        <div class="mb-6">
+            <label for="priority" class="block text-sm font-medium text-gray-700 mb-2">Priority</label>
+            <select id="priority" name="priority"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                <option value="low">Low</option>
+                <option value="medium" selected>Medium</option>
+                <option value="high">High</option>
+                <option value="urgent">Urgent</option>
+            </select>
+        </div>
+
+        <div class="mb-6 space-y-3">
+            <div class="flex items-center">
+                <input type="checkbox" id="send_email" name="send_email" checked
+                       class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                <label for="send_email" class="ml-2 text-sm text-gray-700">Send email notification to recipients</label>
+            </div>
+
+            <div class="flex items-center">
+                <input type="checkbox" id="is_pinned" name="is_pinned"
+                       class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                <label for="is_pinned" class="ml-2 text-sm text-gray-700">Pin announcement to top</label>
+            </div>
+        </div>
+
+        <div class="flex gap-4">
+            <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700">
+                Create Announcement
+            </button>
+            <a href="{% url 'announcements:list' %}" class="bg-gray-200 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-300">
+                Cancel
+            </a>
+        </div>
+    </form>
+</div>
+
+<script>
+    const scopeSelect = document.getElementById('scope');
+    const courseField = document.getElementById('courseField');
+    const courseSelect = document.getElementById('course_id');
+
+    scopeSelect.addEventListener('change', function() {
+        if (this.value === 'platform') {
+            courseField.style.display = 'none';
+            courseSelect.required = false;
+        } else {
+            courseField.style.display = 'block';
+            courseSelect.required = true;
+        }
+    });
+</script>
+{% endblock %}

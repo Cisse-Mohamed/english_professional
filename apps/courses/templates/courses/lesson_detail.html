@@ -1,0 +1,261 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ lesson.title }} | EnglishPro{% endblock %}
+
+{% block extra_css %}
+<style>
+    .content-area {
+        line-height: 1.8;
+        font-size: 1.1rem;
+        margin-bottom: 2rem;
+    }
+
+    .media-container {
+        margin-bottom: 2rem;
+        border-radius: var(--radius-md);
+        overflow: hidden;
+        border: 1px solid var(--border);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container animate-fade-in" style="padding: 2rem 0;">
+    <div class="card">
+        <div style="margin-bottom: 2rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border);">
+            <a href="{% url 'courses:course_detail' course.pk %}"
+                style="color: var(--primary); font-weight: 500; display: inline-flex; align-items: center; margin-bottom: 1rem;">
+                &larr; Back to Course
+            </a>
+            <h1 style="margin-bottom: 0.5rem;">{{ lesson.title }}</h1>
+            <p style="color: var(--text-muted);">{{ course.title }}</p>
+        </div>
+
+        {% if lesson.video_file %}
+        <div class="media-container">
+            <video controls style="width: 100%; display: block;">
+                <source src="{{ lesson.video_file.url }}" type="video/mp4">
+                Your browser does not support the video tag.
+            </video>
+        </div>
+        {% endif %}
+
+        {% if user.is_instructor %}
+        <div style="margin-bottom: 2rem; display: flex; gap: 1rem;">
+            <a href="{% url 'courses:assignment_create' course.pk lesson.pk %}" class="btn btn-primary"
+                style="font-size: 0.9rem;">+ Add Assignment</a>
+            <a href="{% url 'peer_review:assignment_create' lesson.pk %}" class="btn btn-secondary"
+                style="font-size: 0.9rem;">+ Add Peer Review</a>
+        </div>
+        {% endif %}
+
+        {% if lesson.assignments.exists %}
+        <div
+            style="margin-bottom: 2rem; padding: 1rem; background-color: var(--background); border-radius: var(--radius-md);">
+            <h3 style="margin-bottom: 0.5rem;">Assignments</h3>
+            <ul style="list-style: none; padding: 0;">
+                {% for assignment in lesson.assignments.all %}
+                <li style="margin-bottom: 0.5rem;">
+                    <a href="{% url 'courses:assignment_detail' assignment.pk %}"
+                        style="color: var(--primary); font-weight: 500;">{{ assignment.title }}</a>
+                    <span style="color: var(--text-muted); font-size: 0.9rem;">
+                        (Due: {{ assignment.due_date|date:"l F d, Y"}})</span>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+        {% if lesson.peer_review_assignments.exists %}
+        <div
+            style="margin-bottom: 2rem; padding: 1rem; background-color: var(--background); border-radius: var(--radius-md);">
+            <h3 style="margin-bottom: 0.5rem;">Peer Review Assignments</h3>
+            <ul style="list-style: none; padding: 0;">
+                {% for assignment in lesson.peer_review_assignments.all %}
+                <li style="margin-bottom: 0.5rem;">
+                    <a href="{% url 'peer_review:assignment_detail' assignment.pk %}"
+                        style="color: var(--primary); font-weight: 500;">{{ assignment.title }}</a>
+                    <span style="color: var(--text-muted); font-size: 0.9rem;">
+                        (Due: {{ assignment.due_date|date:"l F d, Y"}})</span>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+        {% if lesson.quiz %}
+        <div
+            style="margin-bottom: 2rem; padding: 1.5rem; background-color: var(--background); border-radius: var(--radius-md); border: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <h3 style="margin-bottom: 0.5rem; font-size: 1.2rem;">Lesson Quiz</h3>
+                <p style="color: var(--text-muted); margin: 0;">Test your knowledge of this lesson.</p>
+            </div>
+            <a href="{% url 'quiz_detail' lesson.quiz.pk %}" class="btn btn-primary">
+                Take Quiz &rarr;
+            </a>
+        </div>
+        {% endif %}
+
+        <div class="content-area">
+            {{ lesson.content|linebreaks }}
+        </div>
+
+        {% if lesson.pdf_file %}
+        <div
+            style="margin-bottom: 2rem; border-radius: var(--radius-md); overflow: hidden; border: 1px solid var(--border); background-color: #525659;">
+            <!-- Toolbar -->
+            <div
+                style="padding: 1rem; background-color: #323639; color: white; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #000;">
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                    <div
+                        style="display: flex; align-items: center; gap: 0.5rem; background: rgba(255,255,255,0.1); padding: 0.25rem; border-radius: 4px;">
+                        <span style="font-size: 0.9rem; padding: 0 0.5rem;">Total Pages: <span
+                                id="page-count">--</span></span>
+                    </div>
+                </div>
+
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                    <div
+                        style="display: flex; align-items: center; gap: 0.5rem; background: rgba(255,255,255,0.1); padding: 0.25rem; border-radius: 4px;">
+                        <button id="zoom-out" class="btn-icon" title="Zoom Out">
+                            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4">
+                                </path>
+                            </svg>
+                        </button>
+                        <span id="zoom-level"
+                            style="font-size: 0.9rem; min-width: 45px; text-align: center;">150%</span>
+                        <button id="zoom-in" class="btn-icon" title="Zoom In">
+                            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 4v16m8-8H4"></path>
+                            </svg>
+                        </button>
+                    </div>
+                    <a href="{{ lesson.pdf_file.url }}" download class="btn-icon" title="Download"
+                        style="text-decoration: none; padding: 6px 12px; background-color: rgba(255,255,255,0.1); border-radius: 4px;">
+                        <span style="margin-right: 0.5rem; font-size: 0.9rem;">Download</span>
+                        <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                        </svg>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Viewer Container -->
+            <div id="pdf-container"
+                style="height: 800px; overflow: auto; display: flex; flex-direction: column; align-items: center; padding: 2rem; gap: 1rem; position: relative;">
+                <!-- Canvases will be injected here -->
+            </div>
+
+            <style>
+                .btn-icon {
+                    background: none;
+                    border: none;
+                    color: white;
+                    cursor: pointer;
+                    padding: 4px;
+                    border-radius: 4px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    transition: background-color 0.2s;
+                }
+
+                .btn-icon:hover {
+                    background-color: rgba(255, 255, 255, 0.2);
+                }
+
+                .btn-icon:disabled {
+                    opacity: 0.5;
+                    cursor: not-allowed;
+                }
+            </style>
+
+            <!-- PDF.js via CDN -->
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+            <script>
+                // Initialize PDF.js
+                pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+                const url = '{{ lesson.pdf_file.url }}';
+                let pdfDoc = null,
+                    scale = 1.5;
+
+                const container = document.getElementById('pdf-container');
+
+                function renderPage(num) {
+                    // Create canvas for this page if it doesn't exist
+                    let canvas = document.getElementById(`pdf-page-${num}`);
+                    if (!canvas) {
+                        canvas = document.createElement('canvas');
+                        canvas.id = `pdf-page-${num}`;
+                        canvas.style.boxShadow = "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)";
+                        container.appendChild(canvas);
+                    }
+
+                    // Fetch page
+                    pdfDoc.getPage(num).then(function (page) {
+                        const viewport = page.getViewport({ scale: scale });
+                        canvas.height = viewport.height;
+                        canvas.width = viewport.width;
+
+                        const ctx = canvas.getContext('2d');
+                        const renderContext = {
+                            canvasContext: ctx,
+                            viewport: viewport
+                        };
+                        page.render(renderContext);
+                    });
+                }
+
+                function renderAllPages() {
+                    // Clear existing if re-rendering (e.g. zoom) - actually better to update existing canvases to keep position, but simple clear is easier for zoom
+                    container.innerHTML = '';
+                    for (let i = 1; i <= pdfDoc.numPages; i++) {
+                        renderPage(i);
+                    }
+                    document.getElementById('zoom-level').textContent = Math.round(scale * 100) + '%';
+                }
+
+                function onZoomIn() {
+                    scale += 0.25;
+                    renderAllPages();
+                }
+
+                function onZoomOut() {
+                    if (scale <= 0.5) return;
+                    scale -= 0.25;
+                    renderAllPages();
+                }
+
+                // Event Listeners
+                document.getElementById('zoom-in').addEventListener('click', onZoomIn);
+                document.getElementById('zoom-out').addEventListener('click', onZoomOut);
+
+                // Initial Load
+                pdfjsLib.getDocument(url).promise.then(function (pdfDoc_) {
+                    pdfDoc = pdfDoc_;
+                    document.getElementById('page-count').textContent = pdfDoc.numPages;
+                    renderAllPages();
+                });
+            </script>
+        </div>
+        {% endif %}
+
+        <div style="margin-top: 3rem; display: flex; justify-content: space-between;">
+            {% if previous_lesson %}
+            <a href="{% url 'courses:lesson_detail' course.pk previous_lesson.pk %}" class="btn btn-secondary">&larr; Previous
+                Lesson</a>
+            {% else %}
+            <span></span>
+            {% endif %}
+
+            {% if next_lesson %}
+            <a href="{% url 'courses:lesson_detail' course.pk next_lesson.pk %}" class="btn btn-primary">Next Lesson &rarr;</a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,140 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard | EnglishPro{% endblock %}
+
+{% block content %}
+<div class="container" style="padding: 2rem 0;">
+    <div style="display: flex; gap: 2rem; align-items: flex-start;">
+        <!-- Sidebar / Profile Summary -->
+        <aside class="card" style="width: 300px; flex-shrink: 0; position: sticky; top: 100px;">
+            <div style="text-align: center; margin-bottom: 2rem;">
+                <div
+                    style="width: 100px; height: 100px; background-color: var(--border); border-radius: 50%; margin: 0 auto 1rem; overflow: hidden;">
+                    {% if user.profile_picture %}
+                    <img src="{{ user.profile_picture.url }}" alt="{{ user.username }}"
+                        style="width: 100%; height: 100%; object-fit: cover;">
+                    {% else %}
+                    <div
+                        style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background-color: var(--primary); color: white; font-size: 2rem; font-weight: bold;">
+                        {{ user.username|make_list|first|upper }}
+                    </div>
+                    {% endif %}
+                </div>
+                <h2 style="font-size: 1.5rem; margin-bottom: 0.5rem;">{{ user.username }}</h2>
+                <p style="color: var(--text-muted); font-size: 0.9rem;">
+                    {% if user.is_instructor %}Instructor{% else %}Student{% endif %}
+                </p>
+                {% if user.is_superuser %}
+                <span
+                    style="display: inline-block; padding: 0.25rem 0.5rem; background-color: var(--secondary); color: white; border-radius: 99px; font-size: 0.75rem; margin-top: 0.5rem;">Admin</span>
+                {% endif %}
+            </div>
+
+            <nav style="display: flex; flex-direction: column; gap: 0.5rem;">
+                <a href="{% url 'profile_edit' %}" class="btn btn-secondary"
+                    style="justify-content: flex-start;">Profile Settings</a>
+                <a href="{% url 'courses:course_list' %}" class="btn btn-secondary" style="justify-content: flex-start;">My
+                    Courses</a>
+                <a href="{% url 'chat_index' %}" class="btn btn-secondary"
+                    style="justify-content: flex-start;">Messages</a>
+                <a href="{% url 'dashboard:calendar' %}" class="btn btn-secondary"
+                    style="justify-content: flex-start;">Calendar</a>
+                <a href="{% url 'video_index' %}" class="btn btn-secondary" style="justify-content: flex-start;">Video
+                    Meetings</a>
+                <a href="{% url 'user_list' %}" class="btn btn-secondary" style="justify-content: flex-start;">User
+                    Directory</a>
+                <a href="{% url 'courses:user_assignments' user.pk %}" class="btn btn-secondary"
+                    style="justify-content: flex-start;">My Assignments</a>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main style="flex-grow: 1; display: flex; flex-direction: column; gap: 2rem;">
+            <!-- Welcome Section -->
+            <section class="card animate-fade-in">
+                <h1 style="margin-bottom: 0.5rem;">Welcome back, {{ user.first_name|default:user.username }}!</h1>
+                <p style="color: var(--text-muted);">Here's what's happening with your courses today.</p>
+            </section>
+
+            <!-- Stats Grid -->
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem;">
+                <div class="card" style="padding: 1.5rem;">
+                    <h3 style="font-size: 1rem; color: var(--text-muted); margin-bottom: 0.5rem;">Active Courses</h3>
+                    <p style="font-size: 2rem; font-weight: 700; color: var(--primary);">{{ active_courses_count }}</p>
+                </div>
+                <div class="card" style="padding: 1.5rem;">
+                    <h3 style="font-size: 1rem; color: var(--text-muted); margin-bottom: 0.5rem;">{{ pending_label }}
+                    </h3>
+                    <p style="font-size: 2rem; font-weight: 700; color: var(--secondary);">{{pending_assignments_count}}
+                    </p>
+                </div>
+                <div class="card" style="padding: 1.5rem;">
+                    <h3 style="font-size: 1rem; color: var(--text-muted); margin-bottom: 0.5rem;">Unread Messages</h3>
+                    <p style="font-size: 2rem; font-weight: 700; color: var(--accent);">{{ unread_messages_count }}</p>
+                </div>
+            </div>
+
+            <!-- Learning Analytics -->
+            <section class="card">
+                <h2 style="font-size: 1.25rem; margin-bottom: 1.5rem;">Performance Overview</h2>
+                {% if quiz_labels %}
+                <div style="height: 300px;">
+                    <canvas id="quizChart"></canvas>
+                </div>
+                {% else %}
+                <div
+                    style="padding: 2rem; text-align: center; color: var(--text-muted); background-color: var(--background); border-radius: var(--radius-md);">
+                    <p>No quiz data available yet. Complete some lessons to see your progress!</p>
+                </div>
+                {% endif %}
+            </section>
+
+            <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+            <script>
+                document.addEventListener('DOMContentLoaded', function () {
+                    const ctx = document.getElementById('quizChart');
+                    if (ctx) {
+                        new Chart(ctx, {
+                            type: 'bar',
+                            data: {
+                                labels: {{ quiz_labels|safe }},
+                                datasets: [{
+                                    label: 'Quiz Score (%)',
+                                    data: {{ quiz_scores|safe }},
+                                    backgroundColor: 'rgba(79, 70, 229, 0.2)',
+                                    borderColor: 'rgba(79, 70, 229, 1)',
+                                    borderWidth: 1,
+                                    borderRadius: 4
+                                }]
+                            },
+                    options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.05)'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
+                        });
+                    }
+                });
+            </script>
+        </main>
+    </div>
+</div>
+{% endblock %}

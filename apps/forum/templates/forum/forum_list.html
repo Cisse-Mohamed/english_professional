@@ -1,0 +1,131 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ course.title }} - Discussion Forum{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'dashboard:dashboard' %}">Dashboard</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'courses:course_detail' course.id %}">{{ course.title }}</a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">Discussion Forum</li>
+        </ol>
+    </nav>
+
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2><i class="fas fa-comments"></i> Discussion Forum</h2>
+            <p class="text-muted">{{ course.title }}</p>
+        </div>
+        {% if is_enrolled or is_instructor %}
+        <a href="{% url 'forum:thread_create' course.id %}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> New Thread
+        </a>
+        {% endif %}
+    </div>
+
+    <!-- Threads List -->
+    {% if threads %}
+    <div class="card">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Thread</th>
+                            <th class="text-center" style="width: 100px;">Replies</th>
+                            <th style="width: 200px;">Last Activity</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for thread in threads %}
+                        <tr>
+                            <td>
+                                <a href="{% url 'forum:thread_detail' thread.id %}" class="text-decoration-none">
+                                    <h6 class="mb-1">{{ thread.title }}</h6>
+                                </a>
+                                <small class="text-muted">
+                                    Started by <strong>{{ thread.author.get_full_name|default:thread.author.username
+                                        }}</strong>
+                                    on {{ thread.created_at|date:"M d, Y" }}
+                                </small>
+                            </td>
+                            <td class="text-center align-middle">
+                                <span class="badge bg-secondary">{{ thread.post_count }}</span>
+                            </td>
+                            <td class="align-middle">
+                                <small class="text-muted">
+                                    {% if thread.last_activity %}
+                                    {{ thread.last_activity|timesince }} ago
+                                    {% else %}
+                                    {{ thread.updated_at|timesince }} ago
+                                    {% endif %}
+                                </small>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pagination -->
+    {% if threads.has_other_pages %}
+    <nav aria-label="Thread pagination" class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% if threads.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ threads.previous_page_number }}">Previous</a>
+            </li>
+            {% else %}
+            <li class="page-item disabled">
+                <span class="page-link">Previous</span>
+            </li>
+            {% endif %}
+
+            {% for num in threads.paginator.page_range %}
+            {% if threads.number == num %}
+            <li class="page-item active">
+                <span class="page-link">{{ num }}</span>
+            </li>
+            {% elif num > threads.number|add:'-3' and num < threads.number|add:'3' %} <li class="page-item">
+                <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                </li>
+                {% endif %}
+                {% endfor %}
+
+                {% if threads.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ threads.next_page_number }}">Next</a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link">Next</span>
+                </li>
+                {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+
+    {% else %}
+    <!-- Empty State -->
+    <div class="card">
+        <div class="card-body text-center py-5">
+            <i class="fas fa-comments fa-4x text-muted mb-3"></i>
+            <h4>No discussions yet</h4>
+            <p class="text-muted">Be the first to start a discussion!</p>
+            {% if is_enrolled or is_instructor %}
+            <a href="{% url 'forum:thread_create' course.id %}" class="btn btn-primary mt-3">
+                <i class="fas fa-plus"></i> Create First Thread
+            </a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container" style="padding: 2rem 0;">
+    <div class="card" style="max-width: 800px; margin: 0 auto;">
+        <h1>Create Peer Review Assignment</h1>
+        <form method="post">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit" class="btn btn-primary">Create Assignment</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

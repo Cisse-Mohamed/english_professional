@@ -1,0 +1,138 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ course.title }} | EnglishPro{% endblock %}
+
+{% block content %}
+<div class="container animate-fade-in" style="padding: 2rem 0;">
+    <!-- Course Header -->
+    <div class="card" style="margin-bottom: 2rem;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
+            <div>
+                <h1 style="margin-bottom: 0.5rem;">{{ course.title }}</h1>
+                <p style="color: var(--text-muted);">Instructor: {{ course.instructor.username }}</p>
+            </div>
+            {% if user == course.instructor %}
+            <div>
+                <a href="{% url 'courses:course_edit' course.pk %}" class="btn btn-secondary">Edit Course</a>
+            </div>
+            {% endif %}
+        </div>
+
+        <div style="margin-bottom: 1.5rem; line-height: 1.6;">
+            {{ course.description|linebreaks }}
+        </div>
+    </div>
+
+    {% if user.is_authenticated and progress_percentage is not None %}
+    <div class="card" style="margin-bottom: 2rem;">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+            <strong>Course Progress</strong>
+            <span><span id="progress-text">{{ progress_percentage }}</span>%</span>
+        </div>
+        <div
+            style="width: 100%; background-color: var(--background); border-radius: 9999px; height: 10px; overflow: hidden; background-color: #e5e7eb;">
+            <div id="progress-bar"
+                style="width: {{ progress_percentage }}%; background-color: var(--primary); height: 100%; transition: width 0.3s ease;">
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Quick Links Section -->
+    {% if user.is_authenticated %}
+    <div class="card" style="margin-bottom: 2rem;">
+        <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+            <a href="{% url 'forum:forum_list' course.id %}" class="btn btn-primary" style="flex: 1; min-width: 200px;">
+                <i class="fas fa-comments"></i> Discussion Forum
+            </a>
+        </div>
+    </div>
+    {% endif %}
+
+
+    <!-- Lessons Section -->
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+        <h2>Lessons</h2>
+        {% if user == course.instructor %}
+        <a href="{% url 'courses:lesson_create' course.pk %}" class="btn btn-primary">Add Lesson</a>
+        {% endif %}
+    </div>
+
+    {% if lessons %}
+    <div style="display: flex; flex-direction: column; gap: 1rem;">
+        {% for lesson in lessons %}
+        <div class="card" style="padding: 1.5rem; display: flex; justify-content: space-between; align-items: center;">
+            <div style="display: flex; gap: 1rem; align-items: center;">
+                <div
+                    style="width: 32px; height: 32px; background-color: var(--background); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: var(--text-muted);">
+                    {{ forloop.counter }}
+                </div>
+                <div>
+                    <h3 style="font-size: 1.1rem; margin-bottom: 0.25rem;">
+                        <a href="{% url 'courses:lesson_detail' course.pk lesson.pk %}">{{ lesson.title }}</a>
+                    </h3>
+                    <span style="font-size: 0.8rem; color: var(--text-muted);">
+                        {{ lesson.created_at|date:"M d, Y" }}
+                    </span>
+                </div>
+            </div>
+
+            <div style="display: flex; align-items: center;">
+                <a href="{% url 'courses:lesson_detail' course.pk lesson.pk %}" class="btn btn-secondary"
+                    style="padding: 0.5rem 1rem; font-size: 0.9rem;">
+                    View Lesson
+                </a>
+
+                {% if user.is_authenticated %}
+                <button onclick="toggleLesson('{{ lesson.pk }}')"
+                    class="btn {% if lesson.pk in completed_lesson_ids %}btn-success{% else %}btn-outline{% endif %}"
+                    style="padding: 0.5rem; margin-left: 0.5rem; border-radius: 5px; cursor: pointer;"
+                    id="btn-lesson-{{ lesson.pk }}" title="Mark as Complete">
+                    {% if lesson.pk in completed_lesson_ids %}✓{% else %}○{% endif %}
+                </button>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="card" style="text-align: center; padding: 2rem; color: var(--text-muted);">
+        No lessons uploaded yet.
+    </div>
+    {% endif %}
+</div>
+
+<script>
+    function toggleLesson(lessonId) {
+        const btn = document.getElementById(`btn-lesson-${lessonId}`);
+
+        fetch(`/courses/lesson/${lessonId}/complete/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+                'Content-Type': 'application/json'
+            },
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    // Update button
+                    if (data.is_completed) {
+                        btn.innerHTML = '✓';
+                        btn.classList.add('btn-success');
+                        btn.classList.remove('btn-outline');
+                    } else {
+                        btn.innerHTML = '○';
+                        btn.classList.remove('btn-success');
+                        btn.classList.add('btn-outline');
+                    }
+
+                    // Reload page to update progress bar (simpler than calc in JS for now, or we can fetch updated progress)
+                    // For better UX, we could calculate locally or have the API return new percentage.
+                    // Let's just reload for now to catch badge events etc.
+                    window.location.reload();
+                }
+            });
+    }
+</script>
+{% endblock %}
