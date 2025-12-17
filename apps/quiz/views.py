@@ -3,7 +3,7 @@ from django.views.generic import DetailView, View
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
 from apps.courses.models import Lesson
-from .models import Quiz, QuizSubmission
+from .models import Quiz, QuizSubmission, EssayQuestionSubmission
 
 class QuizDetailView(LoginRequiredMixin, DetailView):
     model = Quiz
@@ -51,35 +51,7 @@ class QuizStartView(LoginRequiredMixin, View):
 
         return redirect('quiz_detail', pk=pk)
 
-import os
-import google.generativeai as genai
-
-def get_ai_feedback(question_text, answer_text):
-    """
-    Gets AI feedback for an essay question.
-    """
-    try:
-        genai.configure(api_key=os.environ["GEMINI_API_KEY"])
-        model = genai.GenerativeModel('gemini-pro')
-        prompt = f"Question: {question_text}\nAnswer: {answer_text}\n\n" \
-                 f"Please provide a score from 0 to 100 and feedback for this answer."
-        response = model.generate_content(prompt)
-        
-        # Very basic parsing of the response. 
-        # A more robust solution would be to use a structured response from the model.
-        parts = response.text.split("Score: ")
-        if len(parts) > 1:
-            score_part = parts[1].split("\n")[0]
-            score = int(score_part)
-            feedback = parts[1]
-        else:
-            score = 0
-            feedback = response.text
-            
-        return feedback, score
-
-    except Exception as e:
-        return f"Error getting AI feedback: {e}", 0
+#import os
 
 class QuizTakeView(LoginRequiredMixin, View):
     def post(self, request, pk):
@@ -114,9 +86,6 @@ class QuizTakeView(LoginRequiredMixin, View):
                         answer=answer_text
                     )
                     # Get AI feedback
-                    feedback, ai_score = get_ai_feedback(question.text, answer_text)
-                    essay_submission.ai_feedback = feedback
-                    essay_submission.ai_score = ai_score
                     essay_submission.save()
 
         
