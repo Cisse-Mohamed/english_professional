@@ -14,6 +14,7 @@ class Quiz(models.Model):
     question_bank = models.ForeignKey(QuestionBank, on_delete=models.CASCADE, related_name='quizzes')
     title = models.CharField(max_length=200)
     description = models.TextField(blank=True)
+    due_date = models.DateTimeField(null=True, blank=True)
     duration = models.PositiveIntegerField(help_text="Duration of the quiz in minutes", default=0)
     number_of_questions = models.PositiveIntegerField(help_text="Number of questions to be drawn from the bank")
     created_at = models.DateTimeField(auto_now_add=True)
@@ -45,7 +46,7 @@ class Choice(models.Model):
 class QuizSubmission(models.Model):
     student = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='quiz_submissions')
     quiz = models.ForeignKey(Quiz, on_delete=models.CASCADE, related_name='submissions')
-    questions = models.ManyToManyField(Question, related_name='quiz_submissions')
+
     score = models.PositiveIntegerField(null=True, blank=True)
     total_questions = models.PositiveIntegerField()
     start_time = models.DateTimeField(auto_now_add=True)
@@ -56,6 +57,21 @@ class QuizSubmission(models.Model):
 
     def __str__(self):
         return f"{self.student.username} - {self.quiz.title}"
+
+class QuizQuestionAttempt(models.Model):
+    submission = models.ForeignKey(QuizSubmission, on_delete=models.CASCADE, related_name='question_attempts')
+    question = models.ForeignKey(Question, on_delete=models.CASCADE, related_name='attempts')
+    selected_choice = models.ForeignKey(Choice, on_delete=models.SET_NULL, null=True, blank=True) # For MCQs
+    essay_answer = models.TextField(blank=True, null=True) # For essay questions
+    is_correct = models.BooleanField(null=True, blank=True) # Null for essays until graded
+    points_earned = models.PositiveIntegerField(null=True, blank=True)
+
+    class Meta:
+        unique_together = ('submission', 'question')
+
+    def __str__(self):
+        return f"{self.submission.student.username}'s attempt on {self.question.text[:50]}"
+
 
 class EssayQuestionSubmission(models.Model):
     submission = models.ForeignKey(QuizSubmission, on_delete=models.CASCADE, related_name='essay_submissions')
