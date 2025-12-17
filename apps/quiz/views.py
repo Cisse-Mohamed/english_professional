@@ -52,7 +52,6 @@ class QuizStartView(LoginRequiredMixin, View):
         return redirect('quiz_detail', pk=pk)
 
 #import os
-
 class QuizTakeView(LoginRequiredMixin, View):
     def post(self, request, pk):
         quiz = get_object_or_404(Quiz, pk=pk)
