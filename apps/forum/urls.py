@@ -17,4 +17,7 @@ urlpatterns = [
     path('thread/<int:thread_id>/reply/', views.post_create, name='post_create'),
     path('post/<int:post_id>/edit/', views.post_edit, name='post_edit'),
     path('post/<int:post_id>/delete/', views.post_delete, name='post_delete'),
+    
+    # Chatbot operations
+    path('chatbot/query/', views.chatbot_query, name='chatbot_query'),
 ]

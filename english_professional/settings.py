@@ -65,7 +65,6 @@ INSTALLED_APPS = [
     'apps.courses',
     'apps.dashboard',
     'apps.chat',
-    'apps.videoconference',
     'apps.gamification',
     'apps.quiz',
     'apps.forum',
@@ -188,6 +187,18 @@ ACCOUNT_SIGNUP_FIELDS = [
     "password1*",
     "password2*",
 ]
+
+# Email Backend (Development)
+EMAIL_BACKEND = env('EMAIL_BACKEND', default='django.core.mail.backends.console.EmailBackend')
+DEFAULT_FROM_EMAIL = env('DEFAULT_FROM_EMAIL', default='noreply@englishprofessional.com')
+
+# Celery Configuration
+CELERY_BROKER_URL = env("CELERY_BROKER_URL", default="redis://127.0.0.1:6379/0")
+CELERY_RESULT_BACKEND = env("CELERY_RESULT_BACKEND", default="redis://127.0.0.1:6379/0")
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = TIME_ZONE
 
 # Allow iframes from same origin (required for PDF viewer)
 X_FRAME_OPTIONS = 'SAMEORIGIN'

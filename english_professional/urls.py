@@ -11,7 +11,6 @@ urlpatterns = [
     path('dashboard/', include('apps.dashboard.urls')),
     path('courses/', include('apps.courses.urls')),
     path('chat/', include('apps.chat.urls')),
-    path('video/', include('apps.videoconference.urls')),
     path('quiz/', include('apps.quiz.urls')),
     path('gamification/', include('apps.gamification.urls')),
     path('forum/', include('apps.forum.urls')),

@@ -1,88 +1,228 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Video Room: {{ room_name }} | EnglishPro{% endblock %}
+{% block title %}Video Room: {{ session_slug }} | EnglishPro{% endblock %}
 
 {% block extra_css %}
 <style>
-    .video-container {
+    .video-grid {
         display: grid;
-        grid-template-columns: 1fr 1fr;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
         gap: 1rem;
         margin-top: 2rem;
     }
 
+    .video-wrapper {
+        position: relative;
+        background: #000;
+        border-radius: 1rem;
+        overflow: hidden;
+        aspect-ratio: 16/9;
+    }
+
     video {
         width: 100%;
-        background: #000;
-        border-radius: var(--radius-md);
+        height: 100%;
+        object-fit: cover;
         transform: scaleX(-1);
-        /* Mirror effect */
+        /* Mirror effect for local video */
     }
 
     .controls {
         text-align: center;
         margin-top: 2rem;
+        display: flex;
+        justify-content: center;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .chat-container {
+        width: 300px; /* Adjust as needed */
+        height: 400px; /* Adjust as needed */
+        border: 1px solid #ccc;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .messages {
+        flex-grow: 1;
+        overflow-y: auto;
+        padding: 10px;
+    }
+
+    .input-area {
+        display: flex;
+        padding: 10px;
+        border-top: 1px solid #eee;
     }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="container animate-fade-in" style="padding: 2rem 0;">
-    <div class="card">
-        <h1 style="text-align: center; margin-bottom: 1rem;">Room: {{ room_name }}</h1>
-        <p style="text-align: center; color: var(--text-muted);">Share this room name with your peer to join.</p>
+<div class="container-fluid animate-fade-in" style="padding: 2rem 0;">
+    <div class="row">
+        <div class="col-md-9">
+            <div class="card p-3">
+                <h1 class="text-center mb-3">Session: {{ session_slug }}
+                    {% if breakout_slug %}<small class="text-muted">(Breakout: {{ breakout_slug }})</small>{% endif %}
+                </h1>
+                <p class="text-center text-muted">Share this session link to invite participants.</p>
 
-        <div class="video-container"
-            style="position: relative; flex-grow: 1; display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 1rem; padding: 1rem; overflow-y: auto;">
-            <!-- Local Video -->
-            <div class="video-wrapper"
-                style="position: relative; background: #000; border-radius: 1rem; overflow: hidden; aspect-ratio: 16/9;">
-                <video id="local-video" autoplay playsinline muted
-                    style="width: 100%; height: 100%; object-fit: cover;"></video>
-                <div
-                    style="position: absolute; bottom: 10px; left: 10px; background: rgba(0,0,0,0.5); padding: 5px 10px; border-radius: 5px; color: white; font-size: 0.8rem;">
-                    You
+                <div class="video-grid">
+                    <!-- Local Video -->
+                    <div class="video-wrapper">
+                        <video id="local-video" autoplay playsinline muted></video>
+                        <div class="position-absolute bottom-0 start-0 bg-dark text-white px-2 py-1 rounded-top-right">
+                            You
+                        </div>
+                    </div>
+                    <!-- Remote videos will be appended here via JS -->
+                </div>
+
+                <div class="controls mt-4">
+                    <button id="start-btn" class="btn btn-primary btn-lg">
+                        Start / Join Call
+                    </button>
+
+                    <div id="call-controls" class="d-flex gap-3 justify-content-center" style="display: none;">
+                        <button id="toggle-audio-btn" class="btn btn-secondary btn-lg">
+                            <i class="fas fa-microphone"></i>
+                            <span class="ms-2">Mute</span>
+                        </button>
+                        <button id="toggle-video-btn" class="btn btn-secondary btn-lg">
+                            <i class="fas fa-video"></i>
+                            <span class="ms-2">Stop Video</span>
+                        </button>
+                        <button id="share-screen-btn" class="btn btn-secondary btn-lg">
+                            <i class="fas fa-desktop"></i>
+                            <span class="ms-2">Share Screen</span>
+                        </button>
+                        {% if is_host %}
+                        <button id="record-btn" class="btn btn-danger btn-lg">
+                            <i class="fas fa-video"></i>
+                            <span class="ms-2">Record</span>
+                        </button>
+                        {% endif %}
+                        <button id="hangup-btn" class="btn btn-danger btn-lg">
+                            <i class="fas fa-phone-slash"></i>
+                            <span class="ms-2">Hang Up</span>
+                        </button>
+                    </div>
                 </div>
             </div>
-            <!-- Remote videos will be appended here via JS -->
         </div>
 
-        <div class="controls">
-            <button id="start-btn" class="btn btn-primary" style="padding: 1rem 2rem; font-size: 1.2rem;">
-                Start / Join Call
-            </button>
+        <div class="col-md-3">
+            <div class="card p-3 h-100 d-flex flex-column">
+                <h4 class="mb-3">Breakout Rooms</h4>
 
-            <div id="call-controls" style="display: none; gap: 1rem; justify-content: center; margin-top: 1rem;">
-                <button id="toggle-audio-btn" class="btn btn-secondary">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
-                        <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
-                        <line x1="12" y1="19" x2="12" y2="23"></line>
-                        <line x1="8" y1="23" x2="16" y2="23"></line>
-                    </svg>
-                    <span style="margin-left: 0.5rem;">Mute</span>
-                </button>
-                <button id="toggle-video-btn" class="btn btn-secondary">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M23 7l-7 5 7 5V7z"></path>
-                        <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
-                    </svg>
-                    <span style="margin-left: 0.5rem;">Stop Video</span>
-                </button>
-                <button id="hangup-btn" class="btn btn-danger" style="background-color: var(--danger); color: white;">
-                    Hang Up
-                </button>
+                <!-- Host Controls (Placeholder - will be shown conditionally with JS) -->
+                <div id="host-controls" class="mb-3" style="border-bottom: 1px solid #eee; padding-bottom: 1rem; display: none;">
+                    <h5>Host Tools</h5>
+                    <div class="input-group mb-2">
+                        <input type="text" id="new-breakout-room-name" class="form-control" placeholder="New room name">
+                        <button class="btn btn-success" id="create-breakout-room-btn">Create</button>
+                    </div>
+                    <button class="btn btn-info btn-sm w-100" id="refresh-breakout-rooms-btn">Refresh Rooms</button>
+                    <div class="mt-2">
+                        <strong>Participants:</strong>
+                        <ul id="participant-list" class="list-group list-group-flush">
+                            <!-- Participants will be loaded here by JS -->
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Participant Name <button class="btn btn-sm btn-outline-primary ms-auto">Assign</button>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Breakout Room List -->
+                <div class="flex-grow-1 overflow-auto mb-4"> {# Added mb-4 for spacing #}
+                    <ul id="breakout-rooms-list" class="list-group list-group-flush">
+                        <!-- Breakout rooms will be loaded here by JS -->
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            Main Room
+                            <button class="btn btn-sm btn-primary ms-auto" data-room-slug="">Join</button>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            Breakout A
+                            <button class="btn btn-sm btn-outline-primary ms-auto" data-room-slug="breakout-a">Join</button>
+                        </li>
+                    </ul>
+                </div>
+
+                <h4 class="mb-3">Recordings</h4>
+                <div class="flex-grow-1 overflow-auto">
+                    <ul id="recordings-list" class="list-group list-group-flush">
+                        <!-- Recordings will be loaded here by JS -->
+                        <li class="list-group-item">No recordings yet.</li>
+                    </ul>
+                </div>
+
+                {% if is_host %}
+                <h4 class="mb-3 mt-4">Attendance</h4>
+                <div class="flex-grow-1 overflow-auto">
+                    <button class="btn btn-info btn-sm w-100 mb-2" id="refresh-attendance-btn">Refresh Attendance</button>
+                    <ul id="attendance-list" class="list-group list-group-flush">
+                        <!-- Attendance records will be loaded here by JS -->
+                        <li class="list-group-item">No attendance data yet.</li>
+                    </ul>
+                </div>
+                {% endif %}
             </div>
         </div>
     </div>
 </div>
 
-{{ room_name|json_script:"room-name" }}
+{{ session_slug|json_script:"session-slug" }}
 {{ user.username|json_script:"user-name" }}
+{{ is_host|json_script:"is-host" }} {# Assuming is_host context variable is passed #}
+{{ video_session_id|json_script:"video-session-id" }} {# Pass video_session_id for API calls #}
+{% if breakout_slug %}{{ breakout_slug|json_script:"breakout-slug" }}{% endif %}
 
 {% endblock %}
 
 {% block extra_js %}
 <script src="{% static 'videoconference/js/webrtc.js' %}"></script>
-{% endblock %}
+<script>
+    // Placeholder for JavaScript to manage breakout rooms
+    // This will include logic for:
+    // - Displaying/hiding host controls
+    // - Calling API to create/list/assign rooms
+    // - Handling participant joins
+    // - Reconnecting WebSockets when changing rooms
+    document.addEventListener('DOMContentLoaded', function() {
+        const sessionSlug = JSON.parse(document.getElementById('session-slug').textContent);
+        const userName = JSON.parse(document.getElementById('user-name').textContent);
+        const isHost = JSON.parse(document.getElementById('is-host').textContent || 'false');
+        const videoSessionId = JSON.parse(document.getElementById('video-session-id').textContent);
+        const currentBreakoutSlugElement = document.getElementById('breakout-slug');
+        const currentBreakoutSlug = currentBreakoutSlugElement ? JSON.parse(currentBreakoutSlugElement.textContent) : null;
+
+        const hostControls = document.getElementById('host-controls');
+        const newBreakoutRoomNameInput = document.getElementById('new-breakout-room-name');
+        const createBreakoutRoomBtn = document.getElementById('create-breakout-room-btn');
+        const refreshBreakoutRoomsBtn = document.getElementById('refresh-breakout-rooms-btn');
+        const breakoutRoomsList = document.getElementById('breakout-rooms-list');
+        const participantList = document.getElementById('participant-list'); // For host to assign
+
+        if (isHost) {
+            hostControls.style.display = 'block';
+        }
+
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    // Does this cookie string begin with the name we want?
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+        {% endblock %} 

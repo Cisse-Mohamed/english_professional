@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+
+{% block title %}Delete Account | EnglishPro{% endblock %}
+
+{% block content %}
+<div class="container" style="padding: 2rem 0; max-width: 600px;">
+    <div class="card" style="padding: 2rem; border-color: #ef4444;">
+        <h1 style="color: #ef4444; margin-bottom: 1rem;">Delete Account</h1>
+        <p style="margin-bottom: 1.5rem;">
+            Are you sure you want to delete your account? This action is <strong>permanent</strong> and cannot be undone. 
+            All your data, including course progress, quiz results, and forum posts, will be permanently removed.
+        </p>
+        
+        <form method="post">
+            {% csrf_token %}
+            <button type="submit" class="btn" style="background-color: #ef4444; color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 4px; cursor: pointer;">Yes, Delete My Account</button>
+            <a href="{% url 'dashboard:dashboard' %}" class="btn btn-secondary" style="margin-left: 1rem;">Cancel</a>
+        </form>
+    </div>
+</div>
+{% endblock %}

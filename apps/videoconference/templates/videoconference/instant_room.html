@@ -1,0 +1,156 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Instant Video Room: {{ session_title }} | EnglishPro{% endblock %}
+
+{% block extra_css %}
+<style>
+    .video-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1rem;
+        margin-top: 2rem;
+    }
+
+    .video-wrapper {
+        position: relative;
+        background: #000;
+        border-radius: 1rem;
+        overflow: hidden;
+        aspect-ratio: 16/9;
+    }
+
+    video {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transform: scaleX(-1);
+        /* Mirror effect for local video */
+    }
+
+    .controls {
+        text-align: center;
+        margin-top: 2rem;
+        display: flex;
+        justify-content: center;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .chat-container {
+        width: 300px; /* Adjust as needed */
+        height: 400px; /* Adjust as needed */
+        border: 1px solid #ccc;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .messages {
+        flex-grow: 1;
+        overflow-y: auto;
+        padding: 10px;
+    }
+
+    .input-area {
+        display: flex;
+        padding: 10px;
+        border-top: 1px solid #eee;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid animate-fade-in" style="padding: 2rem 0;">
+    <div class="row">
+        <div class="col-md-9">
+            <div class="card p-3">
+                <h1 class="text-center mb-3">Instant Session: {{ session_title }}</h1>
+                <p class="text-center text-muted">Share this link to invite others to your instant session.</p>
+
+                <div class="video-grid">
+                    <!-- Local Video -->
+                    <div class="video-wrapper">
+                        <video id="local-video" autoplay playsinline muted></video>
+                        <div class="position-absolute bottom-0 start-0 bg-dark text-white px-2 py-1 rounded-top-right">
+                            You
+                        </div>
+                    </div>
+                    <!-- Remote videos will be appended here via JS -->
+                </div>
+
+                <div class="controls mt-4">
+                    <button id="start-btn" class="btn btn-primary btn-lg">
+                        Start / Join Call
+                    </button>
+
+                    <div id="call-controls" class="d-flex gap-3 justify-content-center" style="display: none;">
+                        <button id="toggle-audio-btn" class="btn btn-secondary btn-lg">
+                            <i class="fas fa-microphone"></i>
+                            <span class="ms-2">Mute</span>
+                        </button>
+                        <button id="toggle-video-btn" class="btn btn-secondary btn-lg">
+                            <i class="fas fa-video"></i>
+                            <span class="ms-2">Stop Video</span>
+                        </button>
+                        <button id="share-screen-btn" class="btn btn-secondary btn-lg">
+                            <i class="fas fa-desktop"></i>
+                            <span class="ms-2">Share Screen</span>
+                        </button>
+                        <button id="hangup-btn" class="btn btn-danger btn-lg">
+                            <i class="fas fa-phone-slash"></i>
+                            <span class="ms-2">Hang Up</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card p-3 h-100 d-flex flex-column">
+                <h4 class="mb-3">Participants</h4>
+                <div class="flex-grow-1 overflow-auto mb-4">
+                    <ul id="participant-list" class="list-group list-group-flush">
+                        <!-- Participants will be loaded here by JS -->
+                        <li class="list-group-item">Loading participants...</li>
+                    </ul>
+                </div>
+                <p class="text-muted text-center">Instant sessions do not support advanced features like breakout rooms or recording.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{ session_slug|json_script:"session-slug" }}
+{{ user.username|json_script:"user-name" }}
+{{ is_host|json_script:"is-host" }}
+{{ session_type|json_script:"session-type" }}
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'videoconference/js/webrtc.js' %}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const sessionSlug = JSON.parse(document.getElementById('session-slug').textContent);
+        const userName = JSON.parse(document.getElementById('user-name').textContent);
+        const isHost = JSON.parse(document.getElementById('is-host').textContent || 'false');
+        const sessionType = JSON.parse(document.getElementById('session-type').textContent); // 'instant' or 'regular'
+        
+        // Host controls are not directly applicable to instant sessions in the same way,
+        // as recording and breakout rooms are disabled.
+        // The isHost flag is still useful for other potential host-specific UI elements.
+        
+        // Placeholder for any specific instant session JS logic
+        console.log(`Joined an instant session: ${sessionSlug}, Host: ${isHost}`);
+
+        // For instant sessions, we might want to load participants dynamically
+        // but not necessarily provide host controls for managing them beyond display.
+        // Placeholder for participant list update logic
+        // This will be part of the WebSocket messaging.
+        // const participantList = document.getElementById('participant-list');
+        // if (participantList) {
+        //     participantList.innerHTML = '<li class="list-group-item">Only active participants shown.</li>';
+        // }
+    });
+</script>
+{% endblock %}

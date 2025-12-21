@@ -40,7 +40,7 @@
                 center: 'title',
                 right: 'dayGridMonth,timeGridWeek,timeGridDay'
             },
-            events: '{% url "calendar_events_api" %}',
+            events: '{% url "dashboard:calendar_events_api" %}',
             eventClick: function (info) {
                 if (info.event.url) {
                     info.jsEvent.preventDefault();

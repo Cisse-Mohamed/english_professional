@@ -1,12 +1,13 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+from django.contrib.auth import logout
 from django.utils import timezone
 from django.urls import reverse
 from django.db.models import Prefetch
 from apps.courses.models import Course, Assignment, Submission
 from apps.chat.models import Message
 from apps.quiz.models import QuizSubmission
-from apps.videoconference.models import VideoSession
 from django.http import JsonResponse
 
 @login_required
@@ -97,17 +98,5 @@ def calendar_events_api(request):
             'backgroundColor': '#ef4444', # Red
             'borderColor': '#ef4444'
         })
-        
-    # 2. Video Sessions (Optimized query)
-    sessions = VideoSession.objects.filter(course__in=courses).select_related('course')
-    for session in sessions:
-        events.append({
-            'title': f"Live: {session.title}",
-            'start': session.start_time.isoformat(),
-            'end': session.end_time.isoformat(),
-            'url': session.meeting_url or '#',
-            'backgroundColor': '#3b82f6', # Blue
-            'borderColor': '#3b82f6'
-        })
-        
+
     return JsonResponse(events, safe=False)

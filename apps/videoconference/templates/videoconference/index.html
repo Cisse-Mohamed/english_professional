@@ -20,6 +20,15 @@
             </button>
         </div>
 
+        <div style="margin-top: 1.5rem;">
+            <form action="{% url 'videoconference:create_instant_session' %}" method="post">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-success" style="padding: 1rem; font-size: 1.1rem; width: 100%;">
+                    Start Instant Session
+                </button>
+            </form>
+        </div>
+
         <p style="margin-top: 2rem; font-size: 0.9rem; color: var(--text-muted);">
             Share the room name with others so they can join the same meeting.
         </p>

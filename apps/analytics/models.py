@@ -3,7 +3,6 @@ from django.conf import settings
 from apps.courses.models import Course
 from django.utils import timezone
 
-
 class StudentPerformanceSnapshot(models.Model):
     """Periodic snapshot of student performance for trend analysis"""
     student = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='performance_snapshots')
