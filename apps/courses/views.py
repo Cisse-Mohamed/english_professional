@@ -2,14 +2,10 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.views.generic import ListView, DetailView, CreateView, UpdateView
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.urls import reverse_lazy
+from django.db.models import Prefetch
 from .models import Course, Lesson, Assignment, Submission, LessonProgress
+from .forms import SubmissionForm, CourseForm, LessonForm, AssignmentForm
 from apps.accounts.models import User
-from django import forms
-
-class SubmissionForm(forms.ModelForm):
-    class Meta:
-        model = Submission
-        fields = ['file']
 
 class InstructorRequiredMixin(UserPassesTestMixin):
     def test_func(self):
@@ -23,13 +19,13 @@ class CourseListView(LoginRequiredMixin, ListView):
     def get_queryset(self):
         user = self.request.user
         if user.is_instructor:
-            return Course.objects.filter(instructor=user)
-        return user.courses_enrolled.all()
+            return Course.objects.filter(instructor=user).select_related('instructor')
+        return user.courses_enrolled.all().select_related('instructor')
 
 class CourseCreateView(LoginRequiredMixin, InstructorRequiredMixin, CreateView):
     model = Course
+    form_class = CourseForm
     template_name = 'courses/course_form.html'
-    fields = ['title', 'description', 'image', 'students']
     success_url = reverse_lazy('courses:course_list')
 
     def form_valid(self, form):
@@ -38,8 +34,8 @@ class CourseCreateView(LoginRequiredMixin, InstructorRequiredMixin, CreateView):
 
 class CourseUpdateView(LoginRequiredMixin, InstructorRequiredMixin, UpdateView):
     model = Course
+    form_class = CourseForm
     template_name = 'courses/course_form.html'
-    fields = ['title', 'description', 'image', 'students']
     
     def get_success_url(self):
         return reverse_lazy('courses:course_detail', kwargs={'pk': self.object.pk})
@@ -51,9 +47,12 @@ class CourseDetailView(LoginRequiredMixin, DetailView):
     model = Course
     template_name = 'courses/course_detail.html'
 
+    def get_queryset(self):
+        return super().get_queryset().prefetch_related('lessons')
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        lessons = self.object.lessons.all()
+        lessons = self.object.lessons.all() # Uses prefetched data
         context['lessons'] = lessons
         
         user = self.request.user
@@ -79,8 +78,8 @@ class CourseDetailView(LoginRequiredMixin, DetailView):
 
 class LessonCreateView(LoginRequiredMixin, InstructorRequiredMixin, CreateView):
     model = Lesson
+    form_class = LessonForm
     template_name = 'courses/lesson_form.html'
-    fields = ['title', 'content', 'video_file', 'pdf_file', 'order']
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -100,9 +99,12 @@ class LessonDetailView(LoginRequiredMixin, DetailView):
     template_name = 'courses/lesson_detail.html'
     pk_url_kwarg = 'lesson_id'
 
+    def get_queryset(self):
+        return super().get_queryset().select_related('course')
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        course = self.object.course
+        course = self.object.course # Uses selected data
         context['course'] = course
         
         lessons = list(course.lessons.all())
@@ -114,13 +116,8 @@ class LessonDetailView(LoginRequiredMixin, DetailView):
 
 class AssignmentCreateView(LoginRequiredMixin, InstructorRequiredMixin, CreateView):
     model = Assignment
+    form_class = AssignmentForm
     template_name = 'courses/assignment_form.html'
-    fields = ['title', 'description', 'due_date', 'file']
-    
-    def get_form(self, form_class=None):
-        form = super().get_form(form_class)
-        form.fields['due_date'].widget = forms.DateTimeInput(attrs={'type': 'datetime-local'})
-        return form
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -140,10 +137,13 @@ class AssignmentDetailView(LoginRequiredMixin, DetailView):
     template_name = 'courses/assignment_detail.html'
     pk_url_kwarg = 'assignment_id'
 
+    def get_queryset(self):
+        return super().get_queryset().prefetch_related('submissions__student')
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         if self.request.user.is_instructor:
-            context['submissions'] = self.object.submissions.all()
+            context['submissions'] = self.object.submissions.all() # Uses prefetched data
         else:
             context['user_submission'] = self.object.submissions.filter(student=self.request.user).first()
             context['submission_form'] = SubmissionForm()
@@ -174,25 +174,30 @@ class UserAssignmentsView(LoginRequiredMixin, ListView):
         else:
             self.view_user = self.request.user
             
-        # Security: Only allow viewing self or if instructor viewing student
         if self.view_user != self.request.user and not self.request.user.is_instructor:
-            return [] # Or raise PermissionDenied
-            
-        # Get all assignments for courses this user is enrolled in
-        # Logic: 
-        # 1. Get courses user is enrolled in.
-        # 2. Get lessons for those courses.
-        # 3. Get assignments for those lessons.
-        # 4. Attach submission status.
-        
+            return []
+
         courses = self.view_user.courses_enrolled.all()
-        # Note: Depending on models, might be self.view_user.course_set.all() or related_name
         
-        assignments = Assignment.objects.filter(lesson__course__in=courses).select_related('lesson__course').order_by('due_date')
+        # Optimized query using Prefetch to avoid N+1
+        submission_prefetch = Prefetch(
+            'submissions',
+            queryset=Submission.objects.filter(student=self.view_user),
+            to_attr='user_submission_list'
+        )
+
+        assignments = Assignment.objects.filter(
+            lesson__course__in=courses
+        ).select_related(
+            'lesson__course'
+        ).prefetch_related(
+            submission_prefetch
+        ).order_by('due_date')
         
+        # Structure the data as before
         data = []
         for assign in assignments:
-            submission = assign.submissions.filter(student=self.view_user).first()
+            submission = assign.user_submission_list[0] if assign.user_submission_list else None
             data.append({
                 'assignment': assign,
                 'submission': submission
@@ -214,7 +219,6 @@ def toggle_lesson_completion(request, lesson_id):
         
     lesson = get_object_or_404(Lesson, pk=lesson_id)
     
-    # Check if user is enrolled
     if not request.user.courses_enrolled.filter(pk=lesson.course.pk).exists() and not request.user.is_instructor:
          return JsonResponse({'status': 'error', 'message': 'Not enrolled'}, status=403)
 

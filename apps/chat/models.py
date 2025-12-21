@@ -1,5 +1,6 @@
 from django.db import models
 from django.conf import settings
+from django.utils import timezone
 
 class Thread(models.Model):
     participants = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='chat_threads')
@@ -8,6 +9,9 @@ class Thread(models.Model):
 
     def __str__(self):
         return f"Thread {self.id}"
+
+    class Meta:
+        ordering = ['-updated_at']
 
 class Message(models.Model):
     MESSAGE_TYPES = [
@@ -33,8 +37,10 @@ class Message(models.Model):
     mentions = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='mentioned_in_messages', blank=True)
     
     timestamp = models.DateTimeField(auto_now_add=True)
-    is_read = models.BooleanField(default=False)
     edited_at = models.DateTimeField(null=True, blank=True)
+    
+    # New field for read receipts
+    read_by = models.ManyToManyField(settings.AUTH_USER_MODEL, through='MessageReadReceipt', related_name='read_messages', blank=True)
 
     class Meta:
         ordering = ['timestamp']
@@ -44,6 +50,23 @@ class Message(models.Model):
 
     def __str__(self):
         return f"Message from {self.sender} at {self.timestamp}"
+
+
+class MessageReadReceipt(models.Model):
+    """Tracks when a user has read a message."""
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    message = models.ForeignKey(Message, on_delete=models.CASCADE, related_name='read_receipts')
+    read_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('user', 'message')
+        indexes = [
+            models.Index(fields=['user', 'message']),
+        ]
+        ordering = ['-read_at']
+
+    def __str__(self):
+        return f"User {self.user.id} read message {self.message.id} at {self.read_at}"
 
 
 class MessageReaction(models.Model):
@@ -58,6 +81,7 @@ class MessageReaction(models.Model):
         indexes = [
             models.Index(fields=['message', 'emoji']),
         ]
+        ordering = ['-created_at']
     
     def __str__(self):
         return f"{self.user.username} reacted {self.emoji} to message {self.message.id}"

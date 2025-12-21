@@ -8,7 +8,6 @@ class ChoiceInline(admin.TabularInline):
 class QuestionInline(admin.StackedInline):
     model = Question
     extra = 1
-    inlines = [ChoiceInline]
 
 @admin.register(QuestionBank)
 class QuestionBankAdmin(admin.ModelAdmin):

@@ -21,7 +21,7 @@
         <div class="card-body">
             <div class="d-flex justify-content-between align-items-start mb-3">
                 <h3 class="mb-0">{{ thread.title }}</h3>
-                {% if user == thread.author or user == course.instructor %}
+                {% if user == thread.author or user in course.instructors.all %}
                 <div class="btn-group">
                     <a href="{% url 'forum:thread_edit' thread.id %}" class="btn btn-sm btn-outline-primary">
                         <i class="fas fa-edit"></i> Edit
@@ -99,7 +99,7 @@
                         </small>
                     </div>
                 </div>
-                {% if user == post.author or user == course.instructor %}
+                {% if user == post.author or user in course.instructors.all %}
                 <div class="btn-group">
                     <a href="{% url 'forum:post_edit' post.id %}" class="btn btn-sm btn-outline-primary">
                         <i class="fas fa-edit"></i>

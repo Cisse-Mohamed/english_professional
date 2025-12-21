@@ -16,7 +16,7 @@ def forum_list(request, course_id):
     
     # Check if user is enrolled in the course or is the instructor
     is_enrolled = course.students.filter(id=request.user.id).exists()
-    is_instructor = course.instructor == request.user
+    is_instructor = request.user in course.instructors.all()
     
     if not (is_enrolled or is_instructor):
         messages.error(request, "You must be enrolled in this course to view the forum.")
@@ -50,7 +50,7 @@ def thread_detail(request, thread_id):
     
     # Check if user is enrolled in the course or is the instructor
     is_enrolled = course.students.filter(id=request.user.id).exists()
-    is_instructor = course.instructor == request.user
+    is_instructor = request.user in course.instructors.all()
     
     if not (is_enrolled or is_instructor):
         messages.error(request, "You must be enrolled in this course to view this thread.")
@@ -81,7 +81,7 @@ def thread_create(request, course_id):
     
     # Check if user is enrolled in the course or is the instructor
     is_enrolled = course.students.filter(id=request.user.id).exists()
-    is_instructor = course.instructor == request.user
+    is_instructor = request.user in course.instructors.all()
     
     if not (is_enrolled or is_instructor):
         messages.error(request, "You must be enrolled in this course to create threads.")
@@ -113,7 +113,7 @@ def thread_edit(request, thread_id):
     thread = get_object_or_404(DiscussionThread, id=thread_id)
     
     # Only the author or instructor can edit
-    if request.user != thread.author and request.user != thread.course.instructor:
+    if request.user != thread.author and request.user not in thread.course.instructors.all():
         return HttpResponseForbidden("You don't have permission to edit this thread.")
     
     if request.method == 'POST':
@@ -141,7 +141,7 @@ def thread_delete(request, thread_id):
     course_id = thread.course.id
     
     # Only the author or instructor can delete
-    if request.user != thread.author and request.user != thread.course.instructor:
+    if request.user != thread.author and request.user not in thread.course.instructors.all():
         return HttpResponseForbidden("You don't have permission to delete this thread.")
     
     if request.method == 'POST':
@@ -164,7 +164,7 @@ def post_create(request, thread_id):
     
     # Check if user is enrolled in the course or is the instructor
     is_enrolled = course.students.filter(id=request.user.id).exists()
-    is_instructor = course.instructor == request.user
+    is_instructor = request.user in course.instructors.all()
     
     if not (is_enrolled or is_instructor):
         messages.error(request, "You must be enrolled in this course to reply.")
@@ -228,7 +228,7 @@ def post_delete(request, post_id):
     thread_id = post.thread.id
     
     # Only the author or instructor can delete
-    if request.user != post.author and request.user != post.thread.course.instructor:
+    if request.user != post.author and request.user not in post.thread.course.instructors.all():
         return HttpResponseForbidden("You don't have permission to delete this post.")
     
     if request.method == 'POST':

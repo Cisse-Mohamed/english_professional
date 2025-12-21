@@ -19,7 +19,7 @@ def announcement_list(request):
     
     # Get course-specific announcements from enrolled courses
     if user.is_instructor:
-        courses = Course.objects.filter(instructor=user)
+        courses = Course.objects.filter(instructors=user)
     else:
         courses = user.courses_enrolled.all()
     
@@ -59,7 +59,7 @@ def announcement_detail(request, announcement_id):
     elif announcement.scope == 'course':
         has_access = (
             announcement.course.students.filter(id=request.user.id).exists() or
-            announcement.course.instructor == request.user
+            request.user in announcement.course.instructors.all()
         )
     else:
         has_access = False
@@ -119,7 +119,7 @@ def announcement_create(request):
     if request.user.is_staff:
         courses = Course.objects.all()
     else:
-        courses = Course.objects.filter(instructor=request.user)
+        courses = Course.objects.filter(instructors=request.user)
     
     context = {
         'courses': courses,
@@ -149,7 +149,7 @@ def unread_announcements_count(request):
     
     # Get all visible announcements
     if user.is_instructor:
-        courses = Course.objects.filter(instructor=user)
+        courses = Course.objects.filter(instructors=user)
     else:
         courses = user.courses_enrolled.all()
     

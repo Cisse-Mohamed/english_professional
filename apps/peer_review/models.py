@@ -8,6 +8,9 @@ class PeerReviewAssignment(models.Model):
     description = models.TextField()
     due_date = models.DateTimeField()
 
+    class Meta:
+        ordering = ['due_date', 'title']
+
     def __str__(self):
         return self.title
 
@@ -16,6 +19,9 @@ class PeerReviewSubmission(models.Model):
     student = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='peer_review_submissions')
     submission_file = models.FileField(upload_to='peer_review/submissions/')
     submitted_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-submitted_at']
 
     def __str__(self):
         return f"{self.student.username}'s submission for {self.assignment.title}"
@@ -29,6 +35,7 @@ class PeerReviewReview(models.Model):
 
     class Meta:
         unique_together = ('submission', 'reviewer')
+        ordering = ['-reviewed_at']
 
     def __str__(self):
         return f"Review by {self.reviewer.username} for {self.submission.student.username}'s submission"

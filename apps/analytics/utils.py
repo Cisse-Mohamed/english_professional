@@ -114,7 +114,7 @@ def calculate_course_engagement(course):
     )
     if quiz_submissions.exists():
         avg_quiz = sum(
-            (q.score / q.total_questions * 100) if q.total_questions > 0 else 0
+            (q.mcq_score / q.total_questions * 100) if q.total_questions > 0 else 0
             for q in quiz_submissions
         ) / quiz_submissions.count()
     else:
@@ -208,7 +208,7 @@ def get_student_heatmap_data(course):
                     quiz=lesson.quiz
                 ).first()
                 if submission and submission.total_questions > 0:
-                    quiz_score = (submission.score / submission.total_questions) * 100
+                    quiz_score = (submission.mcq_score / submission.total_questions) * 100
             
             student_row['lessons'].append({
                 'lesson_id': lesson.id,

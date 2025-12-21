@@ -29,7 +29,7 @@ def student_performance_dashboard(request, course_id):
     course = get_object_or_404(Course, id=course_id)
     
     # Ensure student is enrolled
-    if not course.students.filter(id=request.user.id).exists() and course.instructor != request.user:
+    if not course.students.filter(id=request.user.id).exists() and request.user not in course.instructors.all():
         return HttpResponse("Unauthorized", status=403)
     
     # Calculate current metrics
@@ -66,11 +66,10 @@ def student_performance_dashboard(request, course_id):
 
 @login_required
 def instructor_analytics_dashboard(request, course_id):
-    """Instructor analytics dashboard for a course"""
     course = get_object_or_404(Course, id=course_id)
     
     # Ensure user is the instructor
-    if course.instructor != request.user:
+    if request.user not in course.instructors.all():
         return HttpResponse("Unauthorized", status=403)
     
     # Calculate or get latest engagement metrics
@@ -136,7 +135,7 @@ def export_student_performance_csv(request, course_id):
     course = get_object_or_404(Course, id=course_id)
     
     # Ensure user is the instructor
-    if course.instructor != request.user:
+    if request.user not in course.instructors.all():
         return HttpResponse("Unauthorized", status=403)
     
     response = HttpResponse(content_type='text/csv')
@@ -192,7 +191,7 @@ def export_engagement_report_csv(request, course_id):
     """Export course engagement report as CSV"""
     course = get_object_or_404(Course, id=course_id)
     
-    if course.instructor != request.user:
+    if request.user not in course.instructors.all():
         return HttpResponse("Unauthorized", status=403)
     
     response = HttpResponse(content_type='text/csv')
@@ -223,7 +222,7 @@ def api_performance_trends(request, course_id):
     course = get_object_or_404(Course, id=course_id)
     
     # Check authorization
-    if not course.students.filter(id=request.user.id).exists() and course.instructor != request.user:
+    if not course.students.filter(id=request.user.id).exists() and request.user not in course.instructors.all():
         return JsonResponse({'error': 'Unauthorized'}, status=403)
     
     days = int(request.GET.get('days', 30))
@@ -237,7 +236,7 @@ def api_course_engagement(request, course_id):
     """API endpoint for course engagement data"""
     course = get_object_or_404(Course, id=course_id)
     
-    if course.instructor != request.user:
+    if request.user not in course.instructors.all():
         return JsonResponse({'error': 'Unauthorized'}, status=403)
     
     latest_metrics = CourseEngagementMetrics.objects.filter(course=course).first()

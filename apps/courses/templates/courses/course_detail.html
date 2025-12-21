@@ -9,9 +9,9 @@
         <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
             <div>
                 <h1 style="margin-bottom: 0.5rem;">{{ course.title }}</h1>
-                <p style="color: var(--text-muted);">Instructor: {{ course.instructor.username }}</p>
+                {% if course.instructors.all %}<p style="color: var(--text-muted);">Instructors: {% for instructor in course.instructors.all %}{{ instructor.username }}{% if not forloop.last %}, {% endif %}{% endfor %}</p>{% endif %}
             </div>
-            {% if user == course.instructor %}
+            {% if user in course.instructors.all %}
             <div>
                 <a href="{% url 'courses:course_edit' course.pk %}" class="btn btn-secondary">Edit Course</a>
             </div>
@@ -53,7 +53,7 @@
     <!-- Lessons Section -->
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
         <h2>Lessons</h2>
-        {% if user == course.instructor %}
+        {% if user in course.instructors.all %}
         <a href="{% url 'courses:lesson_create' course.pk %}" class="btn btn-primary">Add Lesson</a>
         {% endif %}
     </div>

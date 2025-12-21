@@ -72,6 +72,7 @@ class ForumReaction(models.Model):
             models.Index(fields=['target_type', 'thread', 'emoji']),
             models.Index(fields=['target_type', 'post', 'emoji']),
         ]
+        ordering = ['-created_at']
     
     def __str__(self):
         target = self.thread if self.target_type == 'thread' else self.post

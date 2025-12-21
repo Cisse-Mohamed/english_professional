@@ -57,8 +57,8 @@
                     <tr>
                         <td class="px-6 py-4 whitespace-nowrap">{{ submission.quiz.title }}</td>
                         <td class="px-6 py-4 whitespace-nowrap">
-                            <span class="px-2 py-1 text-sm rounded {% if submission.score >= submission.total_questions|floatformat:0|mul:0.7 %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %}">
-                                {{ submission.score }}/{{ submission.total_questions }}
+                            <span class="px-2 py-1 text-sm rounded {% if submission.mcq_score >= submission.total_questions|floatformat:0|mul:0.7 %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %}">
+                                {{ submission.mcq_score }}/{{ submission.total_questions }}
                             </span>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ submission.submitted_at|date:"M d, Y" }}</td>

@@ -52,7 +52,7 @@ class Announcement(models.Model):
         elif self.scope == 'course' and self.course:
             # Course students + instructor
             recipients = list(self.course.students.all())
-            recipients.append(self.course.instructor)
+            recipients.extend(self.course.instructors.all())
             return recipients
         return []
 

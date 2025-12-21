@@ -12,10 +12,16 @@ class Badge(models.Model):
     def __str__(self):
         return self.name
 
+    class Meta:
+        ordering = ['-points_required', 'name']
+
 class UserPoints(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='gamification_points')
     total_points = models.PositiveIntegerField(default=0)
     updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-total_points']
 
     def __str__(self):
         return f"{self.user.username} - {self.total_points} pts"
@@ -27,6 +33,7 @@ class UserBadge(models.Model):
 
     class Meta:
         unique_together = ('user', 'badge')
+        ordering = ['-awarded_at']
 
     def __str__(self):
         return f"{self.user.username} - {self.badge.name}"

@@ -20,7 +20,7 @@
             style="text-align: center; padding: 2rem; background-color: var(--background); border-radius: var(--radius-md);">
             <h2>Result</h2>
             <div style="font-size: 3rem; font-weight: bold; color: var(--primary); margin: 1rem 0;">
-                {{ submission.score }} / {{ submission.total_questions }}
+                {{ submission.mcq_score }} / {{ submission.total_questions }}
             </div>
             <p>You submitted this quiz on {{ submission.end_time|date:"M d, Y H:i" }}</p>
 
