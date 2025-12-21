@@ -58,19 +58,20 @@ INSTALLED_APPS = [
     'allauth.account',
     'allauth.socialaccount',
     'channels',
+    'taggit',
     
     # Local apps
-    'apps.accounts',
-    'apps.core',
-    'apps.courses',
-    'apps.dashboard',
-    'apps.chat',
-    'apps.gamification',
-    'apps.quiz',
-    'apps.forum',
-    'apps.analytics',
-    'apps.announcements',
-    'apps.peer_review',
+    'apps.accounts.apps.AccountsConfig',
+    'apps.core.apps.CoreConfig',
+    'apps.courses.apps.CoursesConfig',
+    'apps.dashboard.apps.DashboardConfig',
+    'apps.chat.apps.ChatConfig',
+    'apps.gamification.apps.GamificationConfig',
+    'apps.quiz.apps.QuizConfig',
+    'apps.forum.apps.ForumConfig',
+    'apps.analytics.apps.AnalyticsConfig',
+    'apps.announcements.apps.AnnouncementsConfig',
+    'apps.peer_review.apps.PeerReviewConfig',
 ]
 
 MIDDLEWARE = [
@@ -178,9 +179,9 @@ AUTHENTICATION_BACKENDS = [
 LOGIN_REDIRECT_URL = 'dashboard:dashboard'
 LOGOUT_REDIRECT_URL = 'account_login'
 
-# Deprecated settings replaced
-ACCOUNT_LOGIN_METHODS = {'email'} # Replaces ACCOUNT_AUTHENTICATION_METHOD = 'email'
-ACCOUNT_EMAIL_VERIFICATION = 'none' # For simplicity in dev
+# Account Settings
+ACCOUNT_LOGIN_METHODS = {'email'}
+ACCOUNT_EMAIL_VERIFICATION = 'optional'
 ACCOUNT_SIGNUP_FIELDS = [
     "email*",
     "username*",
@@ -199,6 +200,16 @@ CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = TIME_ZONE
+
+# Production Security Settings
+# These settings are activated when DEBUG is False.
+if not DEBUG:
+    SECURE_SSL_REDIRECT = env.bool('SECURE_SSL_REDIRECT', default=True)
+    SESSION_COOKIE_SECURE = env.bool('SESSION_COOKIE_SECURE', default=True)
+    CSRF_COOKIE_SECURE = env.bool('CSRF_COOKIE_SECURE', default=True)
+    SECURE_HSTS_SECONDS = env.int('SECURE_HSTS_SECONDS', default=31536000)  # 1 year
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = env.bool('SECURE_HSTS_INCLUDE_SUBDOMAINS', default=True)
+    SECURE_HSTS_PRELOAD = env.bool('SECURE_HSTS_PRELOAD', default=True)
 
 # Allow iframes from same origin (required for PDF viewer)
 X_FRAME_OPTIONS = 'SAMEORIGIN'
