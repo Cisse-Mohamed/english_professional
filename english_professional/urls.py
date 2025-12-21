@@ -17,6 +17,7 @@ urlpatterns = [
     path('forum/', include('apps.forum.urls')),
     path('analytics/', include('apps.analytics.urls')),
     path('announcements/', include('apps.announcements.urls')),
+    path('peer-review/', include('apps.peer_review.urls', namespace='peer_review')),
 ]
 
 if settings.DEBUG:
