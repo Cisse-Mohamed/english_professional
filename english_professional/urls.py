@@ -19,5 +19,10 @@ urlpatterns = [
     path('peer-review/', include('apps.peer_review.urls', namespace='peer_review')),
 ]
 
+# Admin Site Customization
+admin.site.site_header = "English Professional Admin"
+admin.site.site_title = "English Professional Portal"
+admin.site.index_title = "Welcome to the Instructor Portal"
+
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

@@ -21,6 +21,7 @@ class Quiz(models.Model):
     duration = models.PositiveIntegerField(help_text="Duration of the quiz in minutes", default=0)
     number_of_questions = models.PositiveIntegerField(help_text="Number of questions to be drawn from the bank")
     points_per_question = models.PositiveIntegerField(default=10, help_text="Points awarded per correct answer")
+    is_published = models.BooleanField(default=False, help_text="If checked, this quiz will be visible to students.")
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -86,4 +87,3 @@ class QuizQuestionAttempt(models.Model):
 
     def __str__(self):
         return f"{self.submission.student.username}'s attempt on {self.question.text[:50]}"
-

@@ -17,10 +17,10 @@ class QuestionBankAdmin(admin.ModelAdmin):
 
 @admin.register(Quiz)
 class QuizAdmin(admin.ModelAdmin):
-    list_display = ('title', 'course', 'question_bank', 'duration', 'created_at')
-    list_filter = ('course',)
+    list_display = ('title', 'course', 'question_bank', 'duration', 'is_published', 'created_at')
+    list_filter = ('course', 'is_published')
     search_fields = ('title', 'course__title')
-    fields = ('course', 'question_bank', 'title', 'description', 'due_date', 'duration', 'number_of_questions', 'points_per_question')
+    fields = ('course', 'question_bank', 'title', 'description', 'is_published', 'due_date', 'duration', 'number_of_questions', 'points_per_question')
 
 @admin.register(Question)
 class QuestionAdmin(admin.ModelAdmin):

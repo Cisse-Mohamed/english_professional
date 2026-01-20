@@ -18,7 +18,10 @@ class QuizDetailView(LoginRequiredMixin, DetailView):
 
     def get_queryset(self):
         # Optimize by prefetching related data that will be used.
-        return Quiz.objects.select_related('course').all() 
+        qs = Quiz.objects.select_related('course').all()
+        if not getattr(self.request.user, 'is_instructor', False):
+            qs = qs.filter(is_published=True)
+        return qs
         
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -40,7 +43,11 @@ class QuizDetailView(LoginRequiredMixin, DetailView):
 
 class QuizStartView(LoginRequiredMixin, View):
     def get(self, request, pk):
-        quiz = get_object_or_404(Quiz.objects.select_related('question_bank'), pk=pk)
+        qs = Quiz.objects.select_related('question_bank')
+        if not getattr(request.user, 'is_instructor', False):
+            qs = qs.filter(is_published=True)
+            
+        quiz = get_object_or_404(qs, pk=pk)
         
         submission, created = QuizSubmission.objects.get_or_create(
             student=request.user, 
